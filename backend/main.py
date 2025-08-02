@@ -10,12 +10,18 @@ app = FastAPI(title="Nyay Sahayak API")
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["https://nyayagpt.onrender.com"],
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+origins = [
+    "https://nyayagpt.vercel.app/",
+    "http://localhost",
+    "http://localhost:8081",
+    "http://127.0.0.1:5500",
+]
 class QueryRequest(BaseModel):
     query: str
 
