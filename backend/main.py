@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 from rag_handler import get_gemini_rag_response, generate_fir_text
+import os
 
 app = FastAPI(title="Nyay Sahayak API")
 
@@ -34,4 +35,4 @@ async def generate_fir(request: Dict[str, Any]):
     return response
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
