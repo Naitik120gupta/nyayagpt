@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyay Sahayak - Legal Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            /* A light, professional blue-gray */
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Custom styles for a more polished look */
+        .main-card {
+            background-color: white;
+            border-radius: 1.5rem;
+            /* More rounded corners */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .main-button {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .main-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+        }
+
+        #results-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            /* A deeper blue for titles */
+            margin-bottom: 0.5rem;
+        }
+
+        #results-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        #results-content strong {
+            color: #1e293b;
+            /* slate-800 */
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="container mx-auto max-w-2xl p-4 w-full">
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <div class="inline-block bg-blue-600 text-white p-3 rounded-full mb-2">
+                <i class="fas fa-balance-scale fa-2x"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800">Nyay Sahayak</h1>
+            <p class="text-gray-500 mt-1">Your AI-Powered Guide to Indian Criminal Law</p>
+        </header>
+
+        <!-- Main App Body -->
+        <main class="flex-grow">
+            <!-- Analyze Screen -->
+            <div id="screen-analyze" class="main-card p-8 fade-in">
+                <label for="crime-description" class="block text-lg font-semibold mb-3 text-gray-700">Describe the
+                    incident:</label>
+                <textarea id="crime-description" rows="8"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    placeholder="e.g., 'A person broke into a house at night and stole jewelry.'"></textarea>
+                <button id="analyze-btn"
+                    class="mt-6 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 main-button flex items-center justify-center">
+                    <i class="fas fa-gavel mr-2"></i>
+                    Analyze Incident
+                </button>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="screen-results" class="main-card p-8 fade-in hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">Analysis Report</h2>
+                        <p class="text-sm text-gray-500">Based on your description:</p>
+                    </div>
+                    <button id="back-btn" class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-times fa-lg"></i>
+                    </button>
+                </div>
+                <p id="user-query-display"
+                    class="bg-gray-100 p-3 rounded-lg mb-6 text-gray-700 border border-gray-200 italic"></p>
+
+                <div id="loading-spinner" class="text-center py-8 hidden">
+                    <i class="fas fa-spinner fa-spin fa-3x text-blue-500"></i>
+                    <p class="mt-2 text-gray-600">Analyzing legal parameters...</p>
+                </div>
+
+                <div id="results-content" class="prose max-w-none">
+                    <!-- Results from the API will be injected here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-xs text-gray-400">
+            <p>Nyay Sahayak Prototype. For informational purposes only. Not legal advice.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const backBtn = document.getElementById('back-btn');
+        const crimeDescription = document.getElementById('crime-description');
+        const screenAnalyze = document.getElementById('screen-analyze');
+        const screenResults = document.getElementById('screen-results');
+        const userQueryDisplay = document.getElementById('user-query-display');
+        const resultsContent = document.getElementById('results-content');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        // --- API Configuration ---
+        const API_URL = 'http://localhost:8000/analyze';
+
+        // --- Event Listeners ---
+        analyzeBtn.addEventListener('click', async () => {
+            const text = crimeDescription.value;
+            if (text.trim() === '') {
+                alert('Please describe the incident first.');
+                return;
+            }
+
+            // Show results screen and loading spinner
+            screenAnalyze.classList.add('hidden');
+            screenResults.classList.remove('hidden');
+            userQueryDisplay.textContent = `"${text}"`;
+            loadingSpinner.classList.remove('hidden');
+            resultsContent.innerHTML = '';
+
+            try {
+                // --- Call the Backend API ---
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: text }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                loadingSpinner.classList.add('hidden');
+
+                if (data.error) {
+                    renderError(data.error);
+                } else {
+                    // Simple formatter for the AI's markdown-like response
+                    renderResults(data.analysis.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>').replace(/\*/g, '<br>'));
+                }
+
+            } catch (error) {
+                console.error("Error calling the API:", error);
+                loadingSpinner.classList.add('hidden');
+                renderError("Could not connect to the analysis server. Please ensure the backend is running.");
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            screenResults.classList.add('hidden');
+            screenAnalyze.classList.remove('hidden');
+            crimeDescription.value = '';
+        });
+
+        function renderResults(analysisHtml) {
+            resultsContent.innerHTML = analysisHtml;
+        }
+
+        function renderError(errorMessage) {
+            resultsContent.innerHTML = `<div class="text-center p-4 bg-red-100 border border-red-300 rounded-lg">
+                <h3 class="font-semibold text-red-800">An Error Occurred</h3>
+                <p class="text-red-700">${errorMessage}</p>
+            </div>`;
+        }
+    </script>
+
+</body>
+
+</html>
