@@ -145,8 +145,8 @@
 
         // --- Event Listeners ---
         analyzeBtn.addEventListener('click', async () => {
-            const text = crimeDescription.value;
-            if (text.trim() === '') {
+            const incidentDescription = crimeDescription.value;
+            if (incidentDescription.trim() === '') {
                 alert('Please describe the incident first.');
                 return;
             }
@@ -154,7 +154,7 @@
             // Show results screen and loading spinner
             screenAnalyze.classList.add('hidden');
             screenResults.classList.remove('hidden');
-            userQueryDisplay.textContent = `"${text}"`;
+            userQueryDisplay.textContent = `"${incidentDescription}"`;
             loadingSpinner.classList.remove('hidden');
             resultsContent.innerHTML = '';
 
@@ -163,22 +163,22 @@
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: text }),
+                    body: JSON.stringify({ query: incidentDescription }),
                 });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const data = await response.json();
+                const apiResponse = await response.json();
 
                 loadingSpinner.classList.add('hidden');
 
-                if (data.error) {
-                    renderError(data.error);
+                if (apiResponse.error) {
+                    renderError(apiResponse.error);
                 } else {
                     // Simple formatter for the AI's markdown-like response
-                    renderResults(data.analysis.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>').replace(/\*/g, '<br>'));
+                    renderResults(apiResponse.analysis.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>').replace(/\*/g, '<br>'));
                 }
 
             } catch (error) {
@@ -194,8 +194,8 @@
             crimeDescription.value = '';
         });
 
-        function renderResults(analysisHtml) {
-            resultsContent.innerHTML = analysisHtml;
+        function renderResults(formattedAnalysisHtml) {
+            resultsContent.innerHTML = formattedAnalysisHtml;
         }
 
         function renderError(errorMessage) {

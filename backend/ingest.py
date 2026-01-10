@@ -25,44 +25,44 @@ def main():
     # 1. Load Data
     try:
         with open(DATA_PATH, 'r', encoding='utf-8') as f:
-            raw_ipc_text = f.read()
+            raw_legal_text = f.read()
     except FileNotFoundError:
         print(f"ERROR: Data file not found at {DATA_PATH}")
         return
 
     # 2. Parse Data
-    pattern = re.compile(r"Section (\d+): (.+?)\n(.+?)(?=\nSection|\Z)", re.DOTALL)
-    sections = [{"id": f"ipc_{m.group(1).strip()}", "document": f"Section {m.group(1).strip()}: {m.group(2).strip()}. {m.group(3).strip().replace(chr(10), ' ')}"} for m in pattern.finditer(raw_ipc_text)]
+    section_pattern = re.compile(r"Section (\d+): (.+?)\n(.+?)(?=\nSection|\Z)", re.DOTALL)
+    legal_sections = [{"id": f"ipc_{m.group(1).strip()}", "document": f"Section {m.group(1).strip()}: {m.group(2).strip()}. {m.group(3).strip().replace(chr(10), ' ')}"} for m in section_pattern.finditer(raw_legal_text)]
     
-    print(f"Parsed {len(sections)} sections.")
+    print(f"Parsed {len(legal_sections)} sections.")
     
     # 3. Create Embeddings with Gemini API
     print(f"Generating embeddings with Gemini model: {EMBEDDING_MODEL}...")
     try:
-        result = genai.embed_content(
+        embedding_result = genai.embed_content(
             model=EMBEDDING_MODEL,
-            content=[s['document'] for s in sections],
+            content=[s['document'] for s in legal_sections],
             task_type="retrieval_document"
         )
-        embeddings = result['embedding']
+        embeddings = embedding_result['embedding']
         print("Embeddings generated successfully.")
     except Exception as e:
         print(f"ERROR: Failed to generate embeddings with Gemini API: {e}")
         return
 
     # 4. Initialize and Populate Vector DB
-    client = chromadb.PersistentClient(path=VECTOR_STORE_PATH)
-    if COLLECTION_NAME in [c.name for c in client.list_collections()]:
-        client.delete_collection(name=COLLECTION_NAME)
+    chroma_client = chromadb.PersistentClient(path=VECTOR_STORE_PATH)
+    if COLLECTION_NAME in [c.name for c in chroma_client.list_collections()]:
+        chroma_client.delete_collection(name=COLLECTION_NAME)
     
-    collection = client.create_collection(name=COLLECTION_NAME)
-    collection.add(
+    vector_collection = chroma_client.create_collection(name=COLLECTION_NAME)
+    vector_collection.add(
         embeddings=embeddings,
-        documents=[s['document'] for s in sections],
-        ids=[s['id'] for s in sections]
+        documents=[s['document'] for s in legal_sections],
+        ids=[s['id'] for s in legal_sections]
     )
     
-    print(f"Successfully added {collection.count()} documents to the vector store.")
+    print(f"Successfully added {vector_collection.count()} documents to the vector store.")
     print("--- Data Ingestion Complete ---")
 
 if __name__ == "__main__":
