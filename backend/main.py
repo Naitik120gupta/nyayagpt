@@ -10,7 +10,6 @@ app = FastAPI(title="Nyay Sahayak API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://nyayagpt.onrender.com"],
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -29,16 +28,16 @@ class FirDataRequest(BaseModel):
     firData: Dict[str, Any]
 
 @app.post("/analyze")
-async def analyze_crime(request: QueryRequest):
-    print(f"Received API call to /analyze with query: {request.query}")
-    response = get_gemini_rag_response(query=request.query)
-    return response
+async def analyze_crime(query_request: QueryRequest):
+    print(f"Received API call to /analyze with query: {query_request.query}")
+    analysis_response = get_gemini_rag_response(query=query_request.query)
+    return analysis_response
 
 @app.post("/generate-fir")
-async def generate_fir(request: Dict[str, Any]):
+async def generate_fir(fir_data_request: Dict[str, Any]):
     print(f"Received API call to /generate-fir")
-    response = generate_fir_text(fir_data=request)
-    return response
+    fir_response = generate_fir_text(fir_data=fir_data_request)
+    return fir_response
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
