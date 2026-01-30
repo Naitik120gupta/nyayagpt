@@ -1,10 +1,15 @@
+import sys
+import os
+
+# Add the project root to sys.path to allow imports from backend.app
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api import endpoints
 from backend.app.core.config import settings
 import logging
-import os
 
 # Configure Logging
 logging.basicConfig(
