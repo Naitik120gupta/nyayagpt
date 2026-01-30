@@ -1,0 +1,24 @@
+/app/backend/app/services/gemini_service.py:1: FutureWarning:
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+INFO:     Started server process [6560]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-01-30 19:28:55,936 - backend.app.services.gemini_service - ERROR - GEMINI_API_KEY not found in configuration.
+2026-01-30 19:28:56,013 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-01-30 19:28:56,357 - backend.app.services.rag_service - INFO - Successfully connected to collection: indian_penal_code
+2026-01-30 19:28:56,358 - backend.app.api.endpoints - INFO - Received API call to /analyze with query: test
+2026-01-30 19:28:56,358 - backend.app.api.endpoints - INFO - Step 1: Embedding user query...
+2026-01-30 19:28:56,359 - backend.app.api.endpoints - ERROR - Error processing /analyze request: Gemini API Key is missing
+INFO:     127.0.0.1:60800 - "POST /analyze HTTP/1.1" 500 Internal Server Error
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6560]
