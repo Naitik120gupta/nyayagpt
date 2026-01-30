@@ -1,0 +1,58 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f4f8;
+    /* A light, professional blue-gray */
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Custom styles for a more polished look */
+.main-card {
+    background-color: white;
+    border-radius: 1.5rem;
+    /* More rounded corners */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    transition: all 0.3s ease-in-out;
+}
+
+.main-button {
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.main-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+}
+
+#results-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    /* A deeper blue for titles */
+    margin-bottom: 0.5rem;
+}
+
+#results-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+#results-content strong {
+    color: #1e293b;
+    /* slate-800 */
+}

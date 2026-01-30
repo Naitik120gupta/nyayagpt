@@ -2,7 +2,7 @@ fastapi
 uvicorn
 python-multipart
 google-generativeai
-chromadb==0.4.24
+chromadb
 python-dotenv
-numpy==1.26.4
-onnxruntime==1.16.3
+numpy
+onnxruntime

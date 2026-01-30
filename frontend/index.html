@@ -8,66 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
-            /* A light, professional blue-gray */
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Custom styles for a more polished look */
-        .main-card {
-            background-color: white;
-            border-radius: 1.5rem;
-            /* More rounded corners */
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-            transition: all 0.3s ease-in-out;
-        }
-
-        .main-button {
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-
-        .main-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-        }
-
-        #results-content h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1e3a8a;
-            /* A deeper blue for titles */
-            margin-bottom: 0.5rem;
-        }
-
-        #results-content p {
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-
-        #results-content strong {
-            color: #1e293b;
-            /* slate-800 */
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body class="flex items-center justify-center min-h-screen">
@@ -86,8 +27,12 @@
         <main class="flex-grow">
             <!-- Analyze Screen -->
             <div id="screen-analyze" class="main-card p-8 fade-in">
-                <label for="crime-description" class="block text-lg font-semibold mb-3 text-gray-700">Describe the
-                    incident:</label>
+                <div class="flex justify-between items-center mb-3">
+                    <label for="crime-description" class="block text-lg font-semibold text-gray-700 mb-0">Describe the incident:</label>
+                    <button id="voice-input-btn" class="text-gray-400 hover:text-blue-600 transition p-2" title="Voice Input (Coming Soon)">
+                        <i class="fas fa-microphone fa-lg"></i>
+                    </button>
+                </div>
                 <textarea id="crime-description" rows="8"
                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                     placeholder="e.g., 'A person broke into a house at night and stole jewelry.'"></textarea>
@@ -129,82 +74,7 @@
         </footer>
     </div>
 
-    <script>
-        // --- DOM Elements ---
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const backBtn = document.getElementById('back-btn');
-        const crimeDescription = document.getElementById('crime-description');
-        const screenAnalyze = document.getElementById('screen-analyze');
-        const screenResults = document.getElementById('screen-results');
-        const userQueryDisplay = document.getElementById('user-query-display');
-        const resultsContent = document.getElementById('results-content');
-        const loadingSpinner = document.getElementById('loading-spinner');
-
-        // --- API Configuration ---
-        const API_URL = 'https://nyayagpt.onrender.com';
-
-        // --- Event Listeners ---
-        analyzeBtn.addEventListener('click', async () => {
-            const incidentDescription = crimeDescription.value;
-            if (incidentDescription.trim() === '') {
-                alert('Please describe the incident first.');
-                return;
-            }
-
-            // Show results screen and loading spinner
-            screenAnalyze.classList.add('hidden');
-            screenResults.classList.remove('hidden');
-            userQueryDisplay.textContent = `"${incidentDescription}"`;
-            loadingSpinner.classList.remove('hidden');
-            resultsContent.innerHTML = '';
-
-            try {
-                // --- Call the Backend API ---
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: incidentDescription }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const apiResponse = await response.json();
-
-                loadingSpinner.classList.add('hidden');
-
-                if (apiResponse.error) {
-                    renderError(apiResponse.error);
-                } else {
-                    // Simple formatter for the AI's markdown-like response
-                    renderResults(apiResponse.analysis.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>').replace(/\*/g, '<br>'));
-                }
-
-            } catch (error) {
-                console.error("Error calling the API:", error);
-                loadingSpinner.classList.add('hidden');
-                renderError("Could not connect to the analysis server. Please ensure the backend is running.");
-            }
-        });
-
-        backBtn.addEventListener('click', () => {
-            screenResults.classList.add('hidden');
-            screenAnalyze.classList.remove('hidden');
-            crimeDescription.value = '';
-        });
-
-        function renderResults(formattedAnalysisHtml) {
-            resultsContent.innerHTML = formattedAnalysisHtml;
-        }
-
-        function renderError(errorMessage) {
-            resultsContent.innerHTML = `<div class="text-center p-4 bg-red-100 border border-red-300 rounded-lg">
-                <h3 class="font-semibold text-red-800">An Error Occurred</h3>
-                <p class="text-red-700">${errorMessage}</p>
-            </div>`;
-        }
-    </script>
+    <script src="assets/js/main.js"></script>
 
 </body>
 
