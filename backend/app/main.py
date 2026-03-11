@@ -15,14 +15,15 @@ logging.basicConfig(
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
+# NOTE: allow_credentials=True is incompatible with the "*" wildcard origin.
+# List specific origins instead.
 origins = [
-    "https://nyayagpt.vercel.app/",
+    "https://nyayagpt.vercel.app",
     "http://localhost",
     "http://localhost:8081",
     "http://localhost:8000",
     "http://127.0.0.1:5500",
     "http://127.0.0.1:8000",
-    "*"
 ]
 
 app.add_middleware(
