@@ -65,6 +65,127 @@
                 <div id="results-content" class="prose max-w-none">
                     <!-- Results from the API will be injected here -->
                 </div>
+
+                <!-- Generate FIR Button (shown after analysis loads) -->
+                <div id="fir-action" class="hidden mt-6">
+                    <hr class="border-gray-200 mb-4">
+                    <p class="text-sm text-gray-500 mb-2">Want to file a report based on this analysis?</p>
+                    <button id="goto-fir-btn"
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        Generate FIR Draft
+                    </button>
+                </div>
+            </div>
+
+            <!-- FIR Form Screen -->
+            <div id="screen-fir-form" class="main-card p-8 fade-in hidden">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">FIR Details</h2>
+                        <p class="text-sm text-gray-500">Fill in the details for the First Information Report</p>
+                    </div>
+                    <button id="back-from-fir-btn" class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-times fa-lg"></i>
+                    </button>
+                </div>
+
+                <form id="fir-form" class="space-y-4">
+                    <!-- Incident Details -->
+                    <fieldset class="border border-gray-200 rounded-lg p-4">
+                        <legend class="text-sm font-semibold text-blue-700 px-1">Incident Details</legend>
+                        <div class="grid grid-cols-2 gap-3 mt-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Police Station</label>
+                                <input type="text" id="fir-ps" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Station name">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">District</label>
+                                <input type="text" id="fir-dist" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="District">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Date of Occurrence</label>
+                                <input type="date" id="fir-date" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Time of Occurrence</label>
+                                <input type="time" id="fir-time" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Place of Occurrence</label>
+                                <input type="text" id="fir-place" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Address / Location">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Complainant Details -->
+                    <fieldset class="border border-gray-200 rounded-lg p-4">
+                        <legend class="text-sm font-semibold text-blue-700 px-1">Complainant Details</legend>
+                        <div class="space-y-3 mt-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+                                <input type="text" id="fir-complainant-name" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Complainant's full name">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Father / Guardian Name</label>
+                                <input type="text" id="fir-guardian" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Father's / Guardian's name">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Address</label>
+                                <input type="text" id="fir-complainant-address" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Full residential address">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Accused & Witnesses -->
+                    <fieldset class="border border-gray-200 rounded-lg p-4">
+                        <legend class="text-sm font-semibold text-blue-700 px-1">Accused & Witnesses</legend>
+                        <div class="space-y-3 mt-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Accused Details</label>
+                                <textarea id="fir-accused" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Name, address, description (if known), or 'Unknown'"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Witness Details</label>
+                                <textarea id="fir-witnesses" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Names and contact details of any witnesses"></textarea>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <button type="submit"
+                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center">
+                        <i class="fas fa-file-signature mr-2"></i>
+                        Generate FIR Document
+                    </button>
+                </form>
+            </div>
+
+            <!-- FIR Result Screen -->
+            <div id="screen-fir-result" class="main-card p-8 fade-in hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">FIR Draft</h2>
+                        <p class="text-sm text-gray-500">AI-generated document — review carefully before use</p>
+                    </div>
+                    <button id="print-fir-btn" class="text-blue-600 hover:text-blue-800 transition" title="Print FIR">
+                        <i class="fas fa-print fa-lg"></i>
+                    </button>
+                </div>
+
+                <div id="fir-loading-spinner" class="text-center py-8 hidden">
+                    <i class="fas fa-spinner fa-spin fa-3x text-blue-500"></i>
+                    <p class="mt-2 text-gray-600">Generating FIR document...</p>
+                </div>
+
+                <div id="fir-result-content" class="bg-gray-50 border border-gray-200 rounded-lg p-4 whitespace-pre-wrap text-sm text-gray-800 leading-relaxed font-mono">
+                    <!-- Generated FIR will be injected here -->
+                </div>
+
+                <button id="start-over-btn"
+                    class="mt-6 w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition">
+                    <i class="fas fa-redo mr-2"></i>
+                    Start Over
+                </button>
             </div>
         </main>
 
