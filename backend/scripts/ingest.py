@@ -7,7 +7,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 import chromadb
 import re
 import logging
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from backend.app.core.config import settings
 
 # Configure logging
@@ -21,7 +22,7 @@ def main():
     if not settings.GEMINI_API_KEY:
         logger.error("GEMINI_API_KEY not found in configuration.")
         return
-    genai.configure(api_key=settings.GEMINI_API_KEY)
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
     # 1. Load Data
     logger.info(f"Loading data from {settings.IPC_DATA_PATH}")
@@ -41,13 +42,12 @@ def main():
     # 3. Create Embeddings with Gemini API
     logger.info(f"Generating embeddings with Gemini model: {settings.EMBEDDING_MODEL}...")
     try:
-        # Batching might be needed if too many sections, but for now keeping it simple as per original
-        embedding_result = genai.embed_content(
+        embedding_result = client.models.embed_content(
             model=settings.EMBEDDING_MODEL,
-            content=[s['document'] for s in legal_sections],
-            task_type="retrieval_document"
+            contents=[s['document'] for s in legal_sections],
+            config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
         )
-        embeddings = embedding_result['embedding']
+        embeddings = [e.values for e in embedding_result.embeddings]
         logger.info("Embeddings generated successfully.")
     except Exception as e:
         logger.error(f"Failed to generate embeddings with Gemini API: {e}")
