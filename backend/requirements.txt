@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 python-multipart
-google-generativeai
+google-genai
 chromadb
 python-dotenv
 numpy

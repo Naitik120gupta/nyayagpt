@@ -14,8 +14,8 @@ class Settings:
 
     # Gemini
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    EMBEDDING_MODEL = "models/embedding-001"
-    GENERATION_MODEL = "gemini-1.5-flash-latest"
+    EMBEDDING_MODEL = "models/gemini-embedding-001"
+    GENERATION_MODEL = "gemini-1.5-flash"
 
     # ChromaDB
     COLLECTION_NAME = "indian_penal_code"
