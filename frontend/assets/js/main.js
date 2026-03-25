@@ -24,7 +24,7 @@ const startOverBtn = document.getElementById('start-over-btn');
 // If running locally, keep it as http://localhost:8000
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'http://localhost:8000' 
-    : 'https://nyayagpt-backend.onrender.com'; 
+    : 'https://nyayagpt.onrender.com'; 
 
 // --- State ---
 let lastAnalysisText = '';
