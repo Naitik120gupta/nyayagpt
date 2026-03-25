@@ -1,6 +1,9 @@
 from google import genai
 from google.genai import types
-from backend.app.core.config import settings
+try:
+    from backend.app.core.config import settings
+except ModuleNotFoundError:
+    from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)

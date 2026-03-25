@@ -1,6 +1,9 @@
 import chromadb
 import os
-from backend.app.core.config import settings
+try:
+    from backend.app.core.config import settings
+except ModuleNotFoundError:
+    from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)

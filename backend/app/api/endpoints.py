@@ -1,8 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Dict, Any
-from backend.app.services.gemini_service import GeminiService
-from backend.app.services.rag_service import RAGService
+try:
+    from backend.app.services.gemini_service import GeminiService
+    from backend.app.services.rag_service import RAGService
+except ModuleNotFoundError:
+    from app.services.gemini_service import GeminiService
+    from app.services.rag_service import RAGService
 import logging
 
 router = APIRouter()
