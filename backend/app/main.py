@@ -1,10 +1,24 @@
 import uvicorn
+import os
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.api import endpoints
-from backend.app.core.config import settings
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.dirname(CURRENT_DIR)
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+
+for import_path in (PROJECT_ROOT, BACKEND_DIR):
+    if import_path not in sys.path:
+        sys.path.insert(0, import_path)
+
+try:
+    from backend.app.api import endpoints
+    from backend.app.core.config import settings
+except ModuleNotFoundError:
+    from app.api import endpoints
+    from app.core.config import settings
 import logging
-import os
 
 # Configure Logging
 logging.basicConfig(
@@ -15,21 +29,12 @@ logging.basicConfig(
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
-# NOTE: allow_credentials=True is incompatible with the "*" wildcard origin.
-# List specific origins instead.
-origins = [
-    "https://nyayagpt.vercel.app",
-    "http://localhost",
-    "http://localhost:8081",
-    "http://localhost:8000",
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:8000",
-]
-
+# For deployment, allow all origins by default (credentials must be False for wildcard)
+# Or configure specific domains if needed
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
