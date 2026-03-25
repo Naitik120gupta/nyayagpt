@@ -20,7 +20,11 @@ const printFirBtn = document.getElementById('print-fir-btn');
 const startOverBtn = document.getElementById('start-over-btn');
 
 // --- API Configuration ---
-const API_BASE_URL = 'http://localhost:8000';
+// Change this URL to your deployed backend URL (e.g., https://nyayagpt-api.onrender.com)
+// If running locally, keep it as http://localhost:8000
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8000' 
+    : 'https://nyayagpt-backend.onrender.com'; 
 
 // --- State ---
 let lastAnalysisText = '';
