@@ -20,15 +20,17 @@ const printFirBtn = document.getElementById('print-fir-btn');
 const startOverBtn = document.getElementById('start-over-btn');
 
 // --- API Configuration ---
-// Change this URL to your deployed backend URL (e.g., https://nyayagpt-api.onrender.com)
-// If running locally, keep it as http://localhost:8000
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:8000' 
-    : 'https://nyayagpt.onrender.com'; 
+const REMOTE_API_URL = 'https://nyayagpt.onrender.com';
+const LOCAL_API_URL = 'http://localhost:8000';
+const urlParams = new URLSearchParams(window.location.search);
+const preferLocalApi = urlParams.get('api') === 'local';
+// Add ?api=local to the URL when you want to force a local backend during development.
+const API_BASE_URL = preferLocalApi ? LOCAL_API_URL : REMOTE_API_URL;
 
 // --- State ---
 let lastAnalysisText = '';
 let lastQuery = '';
+let lastFirFormData = null;
 
 // --- Helper: hide all screens ---
 function showScreen(screenEl) {
@@ -70,14 +72,14 @@ if (analyzeBtn) {
                 renderError(apiResponse.error, resultsContent);
             } else {
                 lastAnalysisText = apiResponse.analysis;
-                renderResults(apiResponse.analysis.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>').replace(/\*/g, '<br>'));
+                renderResults(apiResponse.analysis);
                 firAction.classList.remove('hidden');
             }
 
         } catch (error) {
             console.error("Error calling the API:", error);
             loadingSpinner.classList.add('hidden');
-            renderError("Could not connect to the analysis server. Please ensure the backend is running at " + API_BASE_URL, resultsContent);
+            renderError(`Could not connect to NyayaGPT services at ${API_BASE_URL}. If you intend to use a local backend, append ?api=local to the URL and ensure ${LOCAL_API_URL} is running.`, resultsContent);
         }
     });
 }
@@ -132,6 +134,8 @@ if (firForm) {
             crimeDescription: lastQuery,
         };
 
+        lastFirFormData = firData;
+
         showScreen(screenFirResult);
         firResultContent.textContent = '';
         firLoadingSpinner.classList.remove('hidden');
@@ -151,7 +155,7 @@ if (firForm) {
             firLoadingSpinner.classList.add('hidden');
 
             if (apiResponse.fir_text) {
-                firResultContent.textContent = apiResponse.fir_text;
+                renderFirDraft(firData, apiResponse.fir_text);
             } else {
                 renderError("Failed to generate FIR document.", firResultContent);
             }
@@ -159,7 +163,7 @@ if (firForm) {
         } catch (error) {
             console.error("Error generating FIR:", error);
             firLoadingSpinner.classList.add('hidden');
-            renderError("Could not connect to the server. Please ensure the backend is running.", firResultContent);
+            renderError(`Could not connect to NyayaGPT services at ${API_BASE_URL}. If you intend to use a local backend, append ?api=local to the URL and ensure ${LOCAL_API_URL} is running.`, firResultContent);
         }
     });
 }
@@ -183,7 +187,7 @@ if (startOverBtn) {
         lastAnalysisText = '';
         lastQuery = '';
         firForm.reset();
-        firResultContent.textContent = '';
+        firResultContent.innerHTML = '';
     });
 }
 
@@ -247,8 +251,24 @@ if (voiceBtn) {
     }
 }
 
-function renderResults(formattedAnalysisHtml) {
-    resultsContent.innerHTML = formattedAnalysisHtml;
+function renderResults(rawAnalysisText) {
+    if (!rawAnalysisText) {
+        resultsContent.innerHTML = '<p class="text-slate-400">No analysis returned.</p>';
+        return;
+    }
+
+    const normalized = rawAnalysisText.replace(/\r/g, '').trim();
+    const headingApplied = normalized.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>');
+    const blocks = headingApplied.split(/\n{2,}/).map(block => block.trim()).filter(Boolean);
+
+    const html = blocks.map(block => {
+        if (block.startsWith('<h3>')) {
+            return `${block.replace(/\n/g, '<br>')}`;
+        }
+        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+
+    resultsContent.innerHTML = html;
 }
 
 function renderError(errorMessage, container) {
@@ -257,4 +277,76 @@ function renderError(errorMessage, container) {
         <h3 class="font-semibold text-red-800">An Error Occurred</h3>
         <p class="text-red-700">${errorMessage}</p>
     </div>`;
+}
+
+function renderFirDraft(firData, firNarrative) {
+    lastFirFormData = firData;
+    const firHtml = buildFirHtml(firData, firNarrative);
+    firResultContent.innerHTML = firHtml;
+}
+
+function buildFirHtml(firData, firNarrative) {
+    const { incident, complainant, accused } = firData;
+    const narrativeHtml = formatNarrative(firNarrative || 'Narrative unavailable.');
+
+    return `
+        <section class="fir-sheet">
+            <header class="fir-header">
+                <div>
+                    <p class="fir-eyebrow">First Information Report · Draft Copy</p>
+                    <h3>Under Section 154 Cr.P.C.</h3>
+                </div>
+                <div class="fir-meta">Prepared via NyayaGPT</div>
+            </header>
+
+            <div class="fir-grid">
+                <div class="fir-cell"><span>Police Station</span><p>${incident.ps || '—'}</p></div>
+                <div class="fir-cell"><span>District</span><p>${incident.dist || '—'}</p></div>
+                <div class="fir-cell"><span>FIR No.</span><p>To be assigned</p></div>
+                <div class="fir-cell"><span>Year</span><p>${new Date().getFullYear()}</p></div>
+                <div class="fir-cell"><span>Date & Time of Information</span><p>${new Date().toLocaleString()}</p></div>
+                <div class="fir-cell"><span>Date & Time of Occurrence</span><p>${incident.date || '—'} ${incident.time || ''}</p></div>
+                <div class="fir-cell"><span>Place of Occurrence</span><p>${incident.place || '—'}</p></div>
+            </div>
+
+            <section class="fir-columns">
+                <article>
+                    <h4>Complainant Details</h4>
+                    <p><strong>Name:</strong> ${complainant.name || '—'}</p>
+                    <p><strong>Father/Guardian:</strong> ${complainant.guardian || '—'}</p>
+                    <p><strong>Address:</strong> ${complainant.address || '—'}</p>
+                </article>
+                <article>
+                    <h4>Accused & Witnesses</h4>
+                    <p><strong>Accused:</strong> ${accused.details || 'Unknown'}</p>
+                    <p><strong>Witnesses:</strong> ${accused.witnesses || '—'}</p>
+                </article>
+            </section>
+
+            <section class="fir-narrative">
+                <h4>Statement of Information</h4>
+                ${narrativeHtml}
+            </section>
+
+            <footer class="fir-footer">
+                <p>This document is a draft FIR generated for review. Please verify and record it in the official register before action.</p>
+                <div class="fir-signature">
+                    <div>
+                        <span>Signature of Informant</span>
+                        <p>${complainant.name || '________________'}</p>
+                    </div>
+                    <div>
+                        <span>Receiving Officer</span>
+                        <p>________________</p>
+                    </div>
+                </div>
+            </footer>
+        </section>
+    `;
+}
+
+function formatNarrative(text) {
+    const cleaned = text.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+    const paragraphs = cleaned.split(/\n+/).map(p => `<p>${p}</p>`).join('');
+    return paragraphs;
 }

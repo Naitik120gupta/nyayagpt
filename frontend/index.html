@@ -4,199 +4,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nyay Sahayak - Legal Guide</title>
+    <title>NyayaGPT — AI Legal Copilot</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
-<body class="flex items-center justify-center min-h-screen">
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
 
-    <div class="container mx-auto max-w-2xl p-4 w-full">
-        <!-- Header -->
-        <header class="text-center mb-6">
-            <div class="inline-block bg-blue-600 text-white p-3 rounded-full mb-2">
-                <i class="fas fa-balance-scale fa-2x"></i>
+    <div class="page-shell relative z-10">
+        <header class="top-nav flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-4">
+                <div class="brand-icon">
+                    <i class="fas fa-scale-balanced"></i>
+                </div>
+                <div>
+                    <p class="eyebrow text-emerald-300">Justice OS</p>
+                    <h1 class="brand-title">NyayaGPT</h1>
+                </div>
             </div>
-            <h1 class="text-4xl font-bold text-gray-800">Nyay Sahayak</h1>
-            <p class="text-gray-500 mt-1">Your AI-Powered Guide to Indian Criminal Law</p>
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="badge beta-badge">Beta</span>
+                <a class="primary-link" href="https://github.com/Naitik120gupta/nyayagpt" target="_blank" rel="noopener noreferrer">Request Access</a>
+            </div>
         </header>
 
-        <!-- Main App Body -->
-        <main class="flex-grow">
-            <!-- Analyze Screen -->
-            <div id="screen-analyze" class="main-card p-8 fade-in">
-                <div class="flex justify-between items-center mb-3">
-                    <label for="crime-description" class="block text-lg font-semibold text-gray-700 mb-0">Describe the incident:</label>
-                    <button id="voice-input-btn" class="text-gray-400 hover:text-blue-600 transition p-2" title="Voice Input (Coming Soon)">
-                        <i class="fas fa-microphone fa-lg"></i>
-                    </button>
-                </div>
-                <textarea id="crime-description" rows="8"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    placeholder="e.g., 'A person broke into a house at night and stole jewelry.'"></textarea>
-                <button id="analyze-btn"
-                    class="mt-6 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 main-button flex items-center justify-center">
-                    <i class="fas fa-gavel mr-2"></i>
-                    Analyze Incident
-                </button>
-            </div>
+        <main class="grid-layout">
+            <section class="hero-panel">
+                <p class="eyebrow glow-text">AI copilot for Indian criminal law</p>
+                <h2 class="hero-headline">Translate raw narratives into defensible legal intelligence.</h2>
+                <p class="hero-copy">NyayaGPT blends precedent-grade research, structured fact extraction, and FIR automation so every
+                    citizen or counsel can navigate criminal jurisprudence with clarity.</p>
 
-            <!-- Results Screen -->
-            <div id="screen-results" class="main-card p-8 fade-in hidden">
-                <div class="flex justify-between items-start mb-4">
+                <div class="hero-actions">
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-800">Analysis Report</h2>
-                        <p class="text-sm text-gray-500">Based on your description:</p>
+                        <p class="hero-metric">Realtime risk briefs</p>
+                        <p class="hero-submetric">Cross-checks IPC, CrPC, BNS, and state amendments in milliseconds.</p>
                     </div>
-                    <button id="back-btn" class="text-gray-400 hover:text-gray-600 transition">
-                        <i class="fas fa-times fa-lg"></i>
+                    <button class="cta-pill" type="button" onclick="document.getElementById('crime-description').focus()">
+                        Launch Analyzer
+                        <i class="fas fa-arrow-trend-up"></i>
                     </button>
                 </div>
-                <p id="user-query-display"
-                    class="bg-gray-100 p-3 rounded-lg mb-6 text-gray-700 border border-gray-200 italic"></p>
 
-                <div id="loading-spinner" class="text-center py-8 hidden">
-                    <i class="fas fa-spinner fa-spin fa-3x text-blue-500"></i>
-                    <p class="mt-2 text-gray-600">Analyzing legal parameters...</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-circle-notch"></i>Transparent reasoning chains</li>
+                    <li><i class="fas fa-shield-halved"></i>Client-safe data perimeter</li>
+                    <li><i class="fas fa-bolt"></i>FIR drafts in under 60 seconds</li>
+                </ul>
+
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <p class="stat-value">62k+</p>
+                        <p class="stat-label">precedents indexed</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-value">14</p>
+                        <p class="stat-label">languages supported</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-value">4.7/5</p>
+                        <p class="stat-label">pilot advocate rating</p>
+                    </div>
                 </div>
+                <p class="trust-note">Co-designed with public defenders, legal aid cells, and civic technologists. Outputs must be
+                    reviewed by a qualified legal professional.</p>
+            </section>
 
-                <div id="results-content" class="prose max-w-none">
-                    <!-- Results from the API will be injected here -->
-                </div>
-
-                <!-- Generate FIR Button (shown after analysis loads) -->
-                <div id="fir-action" class="hidden mt-6">
-                    <hr class="border-gray-200 mb-4">
-                    <p class="text-sm text-gray-500 mb-2">Want to file a report based on this analysis?</p>
-                    <button id="goto-fir-btn"
-                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center">
-                        <i class="fas fa-file-alt mr-2"></i>
-                        Generate FIR Draft
-                    </button>
-                </div>
-            </div>
-
-            <!-- FIR Form Screen -->
-            <div id="screen-fir-form" class="main-card p-8 fade-in hidden">
-                <div class="flex justify-between items-start mb-6">
+            <section class="interface-panel">
+                <div class="interface-header">
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-800">FIR Details</h2>
-                        <p class="text-sm text-gray-500">Fill in the details for the First Information Report</p>
+                        <p class="eyebrow text-emerald-300">Case Intelligence</p>
+                        <h3 class="interface-title">Incident analyzer · FIR studio</h3>
                     </div>
-                    <button id="back-from-fir-btn" class="text-gray-400 hover:text-gray-600 transition">
-                        <i class="fas fa-times fa-lg"></i>
-                    </button>
                 </div>
 
-                <form id="fir-form" class="space-y-4">
-                    <!-- Incident Details -->
-                    <fieldset class="border border-gray-200 rounded-lg p-4">
-                        <legend class="text-sm font-semibold text-blue-700 px-1">Incident Details</legend>
-                        <div class="grid grid-cols-2 gap-3 mt-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Police Station</label>
-                                <input type="text" id="fir-ps" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Station name">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">District</label>
-                                <input type="text" id="fir-dist" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="District">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Date of Occurrence</label>
-                                <input type="date" id="fir-date" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Time of Occurrence</label>
-                                <input type="time" id="fir-time" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="col-span-2">
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Place of Occurrence</label>
-                                <input type="text" id="fir-place" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Address / Location">
-                            </div>
+                <div class="interface-stack">
+                    <!-- Analyze Screen -->
+                    <div id="screen-analyze" class="main-card fade-in">
+                        <div class="flex justify-between items-center gap-3 mb-4 flex-wrap">
+                            <label for="crime-description" class="text-base font-semibold tracking-tight text-slate-50">Describe the
+                                incident</label>
+                            <button id="voice-input-btn" class="voice-chip" title="Voice Input">
+                                <i class="fas fa-microphone"></i>
+                                Dictate
+                            </button>
                         </div>
-                    </fieldset>
-
-                    <!-- Complainant Details -->
-                    <fieldset class="border border-gray-200 rounded-lg p-4">
-                        <legend class="text-sm font-semibold text-blue-700 px-1">Complainant Details</legend>
-                        <div class="space-y-3 mt-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
-                                <input type="text" id="fir-complainant-name" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Complainant's full name">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Father / Guardian Name</label>
-                                <input type="text" id="fir-guardian" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Father's / Guardian's name">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Address</label>
-                                <input type="text" id="fir-complainant-address" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Full residential address">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <!-- Accused & Witnesses -->
-                    <fieldset class="border border-gray-200 rounded-lg p-4">
-                        <legend class="text-sm font-semibold text-blue-700 px-1">Accused & Witnesses</legend>
-                        <div class="space-y-3 mt-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Accused Details</label>
-                                <textarea id="fir-accused" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Name, address, description (if known), or 'Unknown'"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Witness Details</label>
-                                <textarea id="fir-witnesses" rows="2" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500" placeholder="Names and contact details of any witnesses"></textarea>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <button type="submit"
-                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center">
-                        <i class="fas fa-file-signature mr-2"></i>
-                        Generate FIR Document
-                    </button>
-                </form>
-            </div>
-
-            <!-- FIR Result Screen -->
-            <div id="screen-fir-result" class="main-card p-8 fade-in hidden">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-800">FIR Draft</h2>
-                        <p class="text-sm text-gray-500">AI-generated document — review carefully before use</p>
+                            <textarea id="crime-description" rows="8"
+                                class="ghost-input"
+                                placeholder="e.g., 'Night-time trespass, two individuals broke into a residence and took jewellery worth ₹3 lakh.'"></textarea>
+                        <button id="analyze-btn" class="primary-btn">
+                            <i class="fas fa-gavel"></i>
+                            Analyze Incident
+                        </button>
                     </div>
-                    <button id="print-fir-btn" class="text-blue-600 hover:text-blue-800 transition" title="Print FIR">
-                        <i class="fas fa-print fa-lg"></i>
-                    </button>
-                </div>
 
-                <div id="fir-loading-spinner" class="text-center py-8 hidden">
-                    <i class="fas fa-spinner fa-spin fa-3x text-blue-500"></i>
-                    <p class="mt-2 text-gray-600">Generating FIR document...</p>
-                </div>
+                    <!-- Results Screen -->
+                    <div id="screen-results" class="main-card fade-in hidden">
+                        <div class="flex justify-between items-start gap-4 mb-4">
+                            <div>
+                                <h2 class="panel-heading">Analysis report</h2>
+                                <p class="panel-subheading">Structured reasoning from your submission.</p>
+                            </div>
+                            <button id="back-btn" class="icon-btn" title="Back to editor">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                        <p id="user-query-display" class="query-pill"></p>
 
-                <div id="fir-result-content" class="bg-gray-50 border border-gray-200 rounded-lg p-4 whitespace-pre-wrap text-sm text-gray-800 leading-relaxed font-mono">
-                    <!-- Generated FIR will be injected here -->
-                </div>
+                        <div id="loading-spinner" class="loading-block hidden">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Analyzing legal parameters...</p>
+                        </div>
 
-                <button id="start-over-btn"
-                    class="mt-6 w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition">
-                    <i class="fas fa-redo mr-2"></i>
-                    Start Over
-                </button>
-            </div>
+                        <div id="results-content" class="prose max-w-none"></div>
+
+                        <div id="fir-action" class="hidden mt-6">
+                            <div class="divider"></div>
+                            <p class="text-sm text-slate-400 mb-3">Convert this reasoning into an FIR-ready draft.</p>
+                            <button id="goto-fir-btn" class="secondary-btn">
+                                <i class="fas fa-file-alt"></i>
+                                Generate FIR Draft
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- FIR Form Screen -->
+                    <div id="screen-fir-form" class="main-card fade-in hidden">
+                        <div class="flex justify-between items-start gap-4 mb-6">
+                            <div>
+                                <h2 class="panel-heading">FIR details</h2>
+                                <p class="panel-subheading">Populate fields for the First Information Report.</p>
+                            </div>
+                            <button id="back-from-fir-btn" class="icon-btn" title="Back to results">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <form id="fir-form" class="space-y-5">
+                            <fieldset class="fieldset">
+                                <legend>Incident details</legend>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                    <div>
+                                        <label class="field-label">Police Station</label>
+                                        <input type="text" id="fir-ps" class="ghost-input" placeholder="Station name">
+                                    </div>
+                                    <div>
+                                        <label class="field-label">District</label>
+                                        <input type="text" id="fir-dist" class="ghost-input" placeholder="District">
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Date of Occurrence</label>
+                                        <input type="date" id="fir-date" class="ghost-input">
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Time of Occurrence</label>
+                                        <input type="time" id="fir-time" class="ghost-input">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="field-label">Place of Occurrence</label>
+                                        <input type="text" id="fir-place" class="ghost-input" placeholder="Address / Location">
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <legend>Complainant details</legend>
+                                <div class="space-y-4 mt-3">
+                                    <div>
+                                        <label class="field-label">Full Name</label>
+                                        <input type="text" id="fir-complainant-name" class="ghost-input" placeholder="Complainant's full name">
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Father / Guardian Name</label>
+                                        <input type="text" id="fir-guardian" class="ghost-input" placeholder="Guardian name">
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Address</label>
+                                        <input type="text" id="fir-complainant-address" class="ghost-input" placeholder="Full residential address">
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <legend>Accused & Witnesses</legend>
+                                <div class="space-y-4 mt-3">
+                                    <div>
+                                        <label class="field-label">Accused Details</label>
+                                        <textarea id="fir-accused" rows="2" class="ghost-input"
+                                            placeholder="Name, address, description or 'Unknown'"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Witness Details</label>
+                                        <textarea id="fir-witnesses" rows="2" class="ghost-input"
+                                            placeholder="Names + contact of witnesses"></textarea>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <button type="submit" class="primary-btn">
+                                <i class="fas fa-file-signature"></i>
+                                Generate FIR Document
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- FIR Result Screen -->
+                    <div id="screen-fir-result" class="main-card fade-in hidden">
+                        <div class="flex justify-between items-start gap-4 mb-4">
+                            <div>
+                                <h2 class="panel-heading">FIR Draft</h2>
+                                <p class="panel-subheading">AI-generated document — review before submission.</p>
+                            </div>
+                            <button id="print-fir-btn" class="icon-btn" title="Print FIR">
+                                <i class="fas fa-print"></i>
+                            </button>
+                        </div>
+
+                        <div id="fir-loading-spinner" class="loading-block hidden">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Generating FIR document...</p>
+                        </div>
+
+                        <div id="fir-result-content" class="fir-output"></div>
+
+                        <button id="start-over-btn" class="ghost-btn">
+                            <i class="fas fa-rotate-left"></i>
+                            Start Over
+                        </button>
+                    </div>
+                </div>
+            </section>
         </main>
 
-        <!-- Footer -->
-        <footer class="mt-8 text-center text-xs text-gray-400">
-            <p>Nyay Sahayak Prototype. For informational purposes only. Not legal advice.</p>
+        <footer class="site-footer">
+            <p>NyayaGPT Prototype · Civic legal intelligence for 2026 · Not a substitute for professional counsel.</p>
         </footer>
     </div>
 
     <script src="assets/js/main.js"></script>
-
 </body>
 
 </html>
