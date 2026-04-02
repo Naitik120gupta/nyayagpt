@@ -81,13 +81,11 @@ Open a Pull Request against the main branch of this repository.
 Describe your changes clearly in the PR description.
 
 ⚖️ Adding Legal Data:
-One of the most valuable ways to contribute is by expanding our ipc_data.txt file.
+One of the most valuable ways to contribute is by improving our BNS dataset file in `backend/data/` (typically `bns_data.csv` from Kaggle export).
 
-If you add new sections, please follow the existing format:
+If you add or refine sections, ensure each entry has clear section number/title/description fields so ingestion can parse it reliably.
 
-Section [Number]: [Title]
-[Description text...]
-After adding data, run python ingest.py to verify that the vector database builds successfully.
+After adding data, run `python scripts/ingest.py` to verify that the vector database builds successfully.
 
 ### Code of Conduct
 We are committed to providing a friendly, safe, and welcoming environment for all. Please be kind and respectful in your issues and pull request comments. Harassment or abusive behavior will not be tolerated.
