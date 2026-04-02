@@ -4,250 +4,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NyayaGPT — AI Legal Copilot</title>
+    <title>NyayaGPT — Citizen Legal Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
-<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+<body class="bg-slate-950 text-slate-100 antialiased h-screen overflow-hidden flex flex-col">
     <div class="glow glow-one"></div>
     <div class="glow glow-two"></div>
 
-    <div class="page-shell relative z-10">
-        <header class="top-nav flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-center gap-4">
-                <div class="brand-icon">
-                    <i class="fas fa-scale-balanced"></i>
-                </div>
-                <div>
-                    <p class="eyebrow text-emerald-300">Justice OS</p>
-                    <h1 class="brand-title">NyayaGPT</h1>
-                </div>
+    <header class="relative z-10 px-6 py-4 border-b border-white/10 flex justify-between items-center bg-slate-950/50 backdrop-blur-md shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="brand-icon text-emerald-400 text-xl flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-400/10 border border-emerald-400/20">
+                <i class="fas fa-scale-balanced"></i>
             </div>
-            <div class="flex items-center gap-3 flex-wrap">
-                <span class="badge beta-badge">Beta</span>
-                <a class="primary-link" href="https://github.com/Naitik120gupta/nyayagpt" target="_blank" rel="noopener noreferrer">Request Access</a>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">NyayaGPT</h1>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Citizen Legal Assistant</p>
             </div>
-        </header>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300">BNS Updated</span>
+        </div>
+    </header>
 
-        <main class="grid-layout">
-            <section class="hero-panel">
-                <p class="eyebrow glow-text">AI copilot for Indian criminal law</p>
-                <h2 class="hero-headline">Translate raw narratives into defensible legal intelligence.</h2>
-                <p class="hero-copy">NyayaGPT blends precedent-grade research, structured fact extraction, and FIR automation so every
-                    citizen or counsel can navigate criminal jurisprudence with clarity.</p>
+    <main class="relative z-10 flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+        
+        <section class="lg:col-span-5 flex flex-col h-full overflow-y-auto custom-scrollbar pr-2 pb-10">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-3 tracking-tight">Structure your legal complaint.</h2>
+                <p class="text-slate-400 leading-relaxed">
+                    Describe your incident in plain English. NyayaGPT helps identify the relevant Bharatiya Nyaya Sanhita (BNS) sections and formats a structured complaint summary for your reference.
+                </p>
+            </div>
 
-                <div class="hero-actions">
-                    <div>
-                        <p class="hero-metric">Realtime risk briefs</p>
-                        <p class="hero-submetric">Cross-checks IPC, CrPC, BNS, and state amendments in milliseconds.</p>
-                    </div>
-                    <button class="cta-pill" type="button" onclick="document.getElementById('crime-description').focus()">
-                        Launch Analyzer
-                        <i class="fas fa-arrow-trend-up"></i>
+            <div class="main-card flex flex-col gap-5">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                    <h3 class="font-semibold text-slate-200">Incident Details</h3>
+                    <button id="voice-input-btn" class="text-xs px-3 py-1.5 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors flex items-center gap-2">
+                        <i class="fas fa-microphone"></i> Dictate
                     </button>
                 </div>
 
-                <ul class="feature-list">
-                    <li><i class="fas fa-circle-notch"></i>Transparent reasoning chains</li>
-                    <li><i class="fas fa-shield-halved"></i>Client-safe data perimeter</li>
-                    <li><i class="fas fa-bolt"></i>FIR drafts in under 60 seconds</li>
-                </ul>
-
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <p class="stat-value">62k+</p>
-                        <p class="stat-label">precedents indexed</p>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-value">14</p>
-                        <p class="stat-label">languages supported</p>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-value">4.7/5</p>
-                        <p class="stat-label">pilot advocate rating</p>
-                    </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input id="complainant-name" type="text" class="ghost-input" placeholder="Your Name">
+                    <input id="accused-details" type="text" class="ghost-input" placeholder="Accused (or Unknown)">
+                    <input id="incident-date" type="date" class="ghost-input text-slate-400">
+                    <input id="incident-time" type="time" class="ghost-input text-slate-400">
                 </div>
-                <p class="trust-note">Co-designed with public defenders, legal aid cells, and civic technologists. Outputs must be
-                    reviewed by a qualified legal professional.</p>
-            </section>
+                <input id="incident-address" type="text" class="ghost-input" placeholder="Location of Incident">
 
-            <section class="interface-panel">
-                <div class="interface-header">
-                    <div>
-                        <p class="eyebrow text-emerald-300">Case Intelligence</p>
-                        <h3 class="interface-title">Incident analyzer · FIR studio</h3>
-                    </div>
+                <div class="relative">
+                    <textarea id="crime-description" rows="6" class="ghost-input w-full resize-none" placeholder="Describe exactly what happened... e.g., 'Someone broke the lock of my shop last night and took goods worth ₹50,000.'"></textarea>
                 </div>
 
-                <div class="interface-stack">
-                    <!-- Analyze Screen -->
-                    <div id="screen-analyze" class="main-card fade-in">
-                        <div class="flex justify-between items-center gap-3 mb-4 flex-wrap">
-                            <label for="crime-description" class="text-base font-semibold tracking-tight text-slate-50">Describe the
-                                incident</label>
-                            <button id="voice-input-btn" class="voice-chip" title="Voice Input">
-                                <i class="fas fa-microphone"></i>
-                                Dictate
-                            </button>
-                        </div>
-                            <textarea id="crime-description" rows="8"
-                                class="ghost-input"
-                                placeholder="e.g., 'Night-time trespass, two individuals broke into a residence and took jewellery worth ₹3 lakh.'"></textarea>
-                        <button id="analyze-btn" class="primary-btn">
-                            <i class="fas fa-gavel"></i>
-                            Analyze Incident
-                        </button>
-                    </div>
+                <button id="analyze-btn" class="primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(52,211,153,0.2)]">
+                    <i class="fas fa-gavel mr-2"></i> Generate Legal Toolkit
+                </button>
+                <p class="text-xs text-center text-slate-500 mt-2">Outputs are for reference only and do not constitute legal counsel.</p>
+            </div>
+        </section>
 
-                    <!-- Results Screen -->
-                    <div id="screen-results" class="main-card fade-in hidden">
-                        <div class="flex justify-between items-start gap-4 mb-4">
-                            <div>
-                                <h2 class="panel-heading">Analysis report</h2>
-                                <p class="panel-subheading">Structured reasoning from your submission.</p>
-                            </div>
-                            <button id="back-btn" class="icon-btn" title="Back to editor">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                        </div>
-                        <p id="user-query-display" class="query-pill"></p>
-
-                        <div id="loading-spinner" class="loading-block hidden">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Analyzing legal parameters...</p>
-                        </div>
-
-                        <div id="results-content" class="prose max-w-none"></div>
-
-                        <div id="fir-action" class="hidden mt-6">
-                            <div class="divider"></div>
-                            <p class="text-sm text-slate-400 mb-3">Convert this reasoning into an FIR-ready draft.</p>
-                            <button id="goto-fir-btn" class="secondary-btn">
-                                <i class="fas fa-file-alt"></i>
-                                Generate FIR Draft
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- FIR Form Screen -->
-                    <div id="screen-fir-form" class="main-card fade-in hidden">
-                        <div class="flex justify-between items-start gap-4 mb-6">
-                            <div>
-                                <h2 class="panel-heading">FIR details</h2>
-                                <p class="panel-subheading">Populate fields for the First Information Report.</p>
-                            </div>
-                            <button id="back-from-fir-btn" class="icon-btn" title="Back to results">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                        </div>
-
-                        <form id="fir-form" class="space-y-5">
-                            <fieldset class="fieldset">
-                                <legend>Incident details</legend>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                                    <div>
-                                        <label class="field-label">Police Station</label>
-                                        <input type="text" id="fir-ps" class="ghost-input" placeholder="Station name">
-                                    </div>
-                                    <div>
-                                        <label class="field-label">District</label>
-                                        <input type="text" id="fir-dist" class="ghost-input" placeholder="District">
-                                    </div>
-                                    <div>
-                                        <label class="field-label">Date of Occurrence</label>
-                                        <input type="date" id="fir-date" class="ghost-input">
-                                    </div>
-                                    <div>
-                                        <label class="field-label">Time of Occurrence</label>
-                                        <input type="time" id="fir-time" class="ghost-input">
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label class="field-label">Place of Occurrence</label>
-                                        <input type="text" id="fir-place" class="ghost-input" placeholder="Address / Location">
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="fieldset">
-                                <legend>Complainant details</legend>
-                                <div class="space-y-4 mt-3">
-                                    <div>
-                                        <label class="field-label">Full Name</label>
-                                        <input type="text" id="fir-complainant-name" class="ghost-input" placeholder="Complainant's full name">
-                                    </div>
-                                    <div>
-                                        <label class="field-label">Father / Guardian Name</label>
-                                        <input type="text" id="fir-guardian" class="ghost-input" placeholder="Guardian name">
-                                    </div>
-                                    <div>
-                                        <label class="field-label">Address</label>
-                                        <input type="text" id="fir-complainant-address" class="ghost-input" placeholder="Full residential address">
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <fieldset class="fieldset">
-                                <legend>Accused & Witnesses</legend>
-                                <div class="space-y-4 mt-3">
-                                    <div>
-                                        <label class="field-label">Accused Details</label>
-                                        <textarea id="fir-accused" rows="2" class="ghost-input"
-                                            placeholder="Name, address, description or 'Unknown'"></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="field-label">Witness Details</label>
-                                        <textarea id="fir-witnesses" rows="2" class="ghost-input"
-                                            placeholder="Names + contact of witnesses"></textarea>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <button type="submit" class="primary-btn">
-                                <i class="fas fa-file-signature"></i>
-                                Generate FIR Document
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- FIR Result Screen -->
-                    <div id="screen-fir-result" class="main-card fade-in hidden">
-                        <div class="flex justify-between items-start gap-4 mb-4">
-                            <div>
-                                <h2 class="panel-heading">FIR Draft</h2>
-                                <p class="panel-subheading">AI-generated document — review before submission.</p>
-                            </div>
-                            <button id="print-fir-btn" class="icon-btn" title="Print FIR">
-                                <i class="fas fa-print"></i>
-                            </button>
-                        </div>
-
-                        <div id="fir-loading-spinner" class="loading-block hidden">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Generating FIR document...</p>
-                        </div>
-
-                        <div id="fir-result-content" class="fir-output"></div>
-
-                        <button id="start-over-btn" class="ghost-btn">
-                            <i class="fas fa-rotate-left"></i>
-                            Start Over
-                        </button>
-                    </div>
+        <section class="lg:col-span-7 flex flex-col h-full bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+            <div class="bg-slate-900/80 border-b border-slate-800 px-6 py-4 shrink-0">
+                <h3 class="font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fas fa-bolt"></i> Output Panel
+                </h3>
+            </div>
+            
+            <div id="output-scroll-area" class="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
+                    <i class="fas fa-file-shield text-4xl mb-4"></i>
+                    <p>Enter incident details and generate the toolkit.</p>
                 </div>
-            </section>
-        </main>
 
-        <footer class="site-footer">
-            <p>NyayaGPT Prototype · Civic legal intelligence for 2026 · Not a substitute for professional counsel.</p>
-        </footer>
-    </div>
+                <div id="loading-spinner" class="hidden h-full flex flex-col items-center justify-center text-emerald-400">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+                    <p class="text-sm font-medium tracking-widest uppercase">Processing BNS Sections...</p>
+                </div>
 
+                <div id="results-content" class="hidden flex flex-col gap-6">
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="assets/js/main.js"></script>
 </body>
-
 </html>
