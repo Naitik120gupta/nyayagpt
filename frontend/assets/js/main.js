@@ -1,44 +1,26 @@
 // --- DOM Elements ---
 const analyzeBtn = document.getElementById('analyze-btn');
-const backBtn = document.getElementById('back-btn');
 const crimeDescription = document.getElementById('crime-description');
-const screenAnalyze = document.getElementById('screen-analyze');
-const screenResults = document.getElementById('screen-results');
-const screenFirForm = document.getElementById('screen-fir-form');
-const screenFirResult = document.getElementById('screen-fir-result');
-const userQueryDisplay = document.getElementById('user-query-display');
-const resultsContent = document.getElementById('results-content');
+const complainantName = document.getElementById('complainant-name');
+const accusedDetails = document.getElementById('accused-details');
+const incidentAddress = document.getElementById('incident-address');
+const incidentDate = document.getElementById('incident-date');
+const incidentTime = document.getElementById('incident-time');
+
+// Right Panel States
+const emptyState = document.getElementById('empty-state');
 const loadingSpinner = document.getElementById('loading-spinner');
+const resultsContent = document.getElementById('results-content');
 const voiceBtn = document.getElementById('voice-input-btn');
-const firAction = document.getElementById('fir-action');
-const gotoFirBtn = document.getElementById('goto-fir-btn');
-const backFromFirBtn = document.getElementById('back-from-fir-btn');
-const firForm = document.getElementById('fir-form');
-const firLoadingSpinner = document.getElementById('fir-loading-spinner');
-const firResultContent = document.getElementById('fir-result-content');
-const printFirBtn = document.getElementById('print-fir-btn');
-const startOverBtn = document.getElementById('start-over-btn');
 
 // --- API Configuration ---
 const REMOTE_API_URL = 'https://nyayagpt.onrender.com';
 const LOCAL_API_URL = 'http://localhost:8000';
 const urlParams = new URLSearchParams(window.location.search);
 const preferLocalApi = urlParams.get('api') === 'local';
-// Add ?api=local to the URL when you want to force a local backend during development.
 const API_BASE_URL = preferLocalApi ? LOCAL_API_URL : REMOTE_API_URL;
 
-// --- State ---
-let lastAnalysisText = '';
-let lastQuery = '';
-let lastFirFormData = null;
-
-// --- Helper: hide all screens ---
-function showScreen(screenEl) {
-    [screenAnalyze, screenResults, screenFirForm, screenFirResult].forEach(s => s.classList.add('hidden'));
-    screenEl.classList.remove('hidden');
-}
-
-// --- Analyze ---
+// --- Analyze Logic ---
 if (analyzeBtn) {
     analyzeBtn.addEventListener('click', async () => {
         const incidentDescription = crimeDescription.value;
@@ -47,18 +29,27 @@ if (analyzeBtn) {
             return;
         }
 
-        lastQuery = incidentDescription;
-        showScreen(screenResults);
-        userQueryDisplay.textContent = `"${incidentDescription}"`;
+        const incidentMeta = {
+            complainant_name: complainantName?.value?.trim() || '',
+            accused_details: accusedDetails?.value?.trim() || '',
+            incident_address: incidentAddress?.value?.trim() || '',
+            incident_date: incidentDate?.value || '',
+            incident_time: incidentTime?.value || '',
+        };
+
+        // UI State Updates
+        emptyState.classList.add('hidden');
+        resultsContent.classList.add('hidden');
         loadingSpinner.classList.remove('hidden');
-        resultsContent.innerHTML = '';
-        firAction.classList.add('hidden');
 
         try {
             const response = await fetch(`${API_BASE_URL}/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: incidentDescription }),
+                body: JSON.stringify({
+                    query: incidentDescription,
+                    ...incidentMeta,
+                }),
             });
 
             if (!response.ok) {
@@ -66,140 +57,34 @@ if (analyzeBtn) {
             }
 
             const apiResponse = await response.json();
+            
             loadingSpinner.classList.add('hidden');
+            resultsContent.classList.remove('hidden');
 
             if (apiResponse.error) {
-                renderError(apiResponse.error, resultsContent);
+                renderError(apiResponse.error);
             } else {
-                lastAnalysisText = apiResponse.analysis;
-                renderResults(apiResponse.analysis);
-                firAction.classList.remove('hidden');
+                const toolkitPayload = normalizeToolkitPayload(apiResponse.analysis);
+                renderToolkit(toolkitPayload, incidentMeta);
             }
 
         } catch (error) {
             console.error("Error calling the API:", error);
             loadingSpinner.classList.add('hidden');
-            renderError(`Could not connect to NyayaGPT services at ${API_BASE_URL}. If you intend to use a local backend, append ?api=local to the URL and ensure ${LOCAL_API_URL} is running.`, resultsContent);
+            resultsContent.classList.remove('hidden');
+            renderError(`Could not connect to NyayaGPT services. Ensure backend is running.`);
         }
-    });
-}
-
-// --- Back from Results ---
-if (backBtn) {
-    backBtn.addEventListener('click', () => {
-        showScreen(screenAnalyze);
-        crimeDescription.value = '';
-        lastAnalysisText = '';
-        lastQuery = '';
-    });
-}
-
-// --- Go to FIR Form ---
-if (gotoFirBtn) {
-    gotoFirBtn.addEventListener('click', () => {
-        showScreen(screenFirForm);
-    });
-}
-
-// --- Back from FIR Form ---
-if (backFromFirBtn) {
-    backFromFirBtn.addEventListener('click', () => {
-        showScreen(screenResults);
-    });
-}
-
-// --- FIR Form Submit ---
-if (firForm) {
-    firForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const firData = {
-            incident: {
-                ps: document.getElementById('fir-ps').value,
-                dist: document.getElementById('fir-dist').value,
-                date: document.getElementById('fir-date').value,
-                time: document.getElementById('fir-time').value,
-                place: document.getElementById('fir-place').value,
-            },
-            complainant: {
-                name: document.getElementById('fir-complainant-name').value,
-                guardian: document.getElementById('fir-guardian').value,
-                address: document.getElementById('fir-complainant-address').value,
-            },
-            accused: {
-                details: document.getElementById('fir-accused').value,
-                witnesses: document.getElementById('fir-witnesses').value,
-            },
-            aiAnalysis: lastAnalysisText,
-            crimeDescription: lastQuery,
-        };
-
-        lastFirFormData = firData;
-
-        showScreen(screenFirResult);
-        firResultContent.textContent = '';
-        firLoadingSpinner.classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/generate-fir`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firData }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
-            firLoadingSpinner.classList.add('hidden');
-
-            if (apiResponse.fir_text) {
-                renderFirDraft(firData, apiResponse.fir_text);
-            } else {
-                renderError("Failed to generate FIR document.", firResultContent);
-            }
-
-        } catch (error) {
-            console.error("Error generating FIR:", error);
-            firLoadingSpinner.classList.add('hidden');
-            renderError(`Could not connect to NyayaGPT services at ${API_BASE_URL}. If you intend to use a local backend, append ?api=local to the URL and ensure ${LOCAL_API_URL} is running.`, firResultContent);
-        }
-    });
-}
-
-// --- Print FIR ---
-if (printFirBtn) {
-    printFirBtn.addEventListener('click', () => {
-        const content = firResultContent.textContent;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<html><head><title>FIR Draft</title><style>body{font-family:monospace;padding:2rem;white-space:pre-wrap}</style></head><body>${content}</body></html>`);
-        printWindow.document.close();
-        printWindow.print();
-    });
-}
-
-// --- Start Over ---
-if (startOverBtn) {
-    startOverBtn.addEventListener('click', () => {
-        showScreen(screenAnalyze);
-        crimeDescription.value = '';
-        lastAnalysisText = '';
-        lastQuery = '';
-        firForm.reset();
-        firResultContent.innerHTML = '';
     });
 }
 
 // --- Voice Input Logic ---
 if (voiceBtn) {
-    // Check for browser support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.continuous = false; // Stop after one sentence/phrase
-        recognition.lang = 'en-US'; // Default to English, could be made configurable
+        recognition.continuous = false; 
+        recognition.lang = 'en-US'; 
         recognition.interimResults = false;
 
         let isRecording = false;
@@ -214,22 +99,18 @@ if (voiceBtn) {
 
         recognition.onstart = () => {
             isRecording = true;
-            voiceBtn.classList.remove('text-gray-400');
-            voiceBtn.classList.add('text-red-600', 'animate-pulse');
-            voiceBtn.title = "Stop Recording";
+            voiceBtn.classList.add('border-red-500', 'text-red-500', 'bg-red-500/10');
+            voiceBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
         };
 
         recognition.onend = () => {
             isRecording = false;
-            voiceBtn.classList.remove('text-red-600', 'animate-pulse');
-            voiceBtn.classList.add('text-gray-400');
-            voiceBtn.title = "Start Voice Input";
+            voiceBtn.classList.remove('border-red-500', 'text-red-500', 'bg-red-500/10');
+            voiceBtn.innerHTML = '<i class="fas fa-microphone"></i> Dictate';
         };
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-
-            // Append to existing text if any, with a space
             if (crimeDescription.value.trim() !== "") {
                 crimeDescription.value += " " + transcript;
             } else {
@@ -238,115 +119,207 @@ if (voiceBtn) {
         };
 
         recognition.onerror = (event) => {
-            console.error("Speech recognition error", event.error);
             isRecording = false;
-            voiceBtn.classList.remove('text-red-600', 'animate-pulse');
-            voiceBtn.classList.add('text-gray-400');
             alert("Error with voice input: " + event.error);
         };
-
     } else {
-        voiceBtn.style.display = 'none'; // Hide button if not supported
-        console.warn("Speech Recognition API not supported in this browser.");
+        voiceBtn.style.display = 'none'; 
     }
 }
 
-function renderResults(rawAnalysisText) {
-    if (!rawAnalysisText) {
-        resultsContent.innerHTML = '<p class="text-slate-400">No analysis returned.</p>';
+// --- Render Logic ---
+function normalizeToolkitPayload(payload) {
+    if (typeof payload === 'string') {
+        try { return JSON.parse(payload); } catch { return null; }
+    }
+    return payload && typeof payload === 'object' ? payload : null;
+}
+
+function renderToolkit(toolkit, incidentMeta) {
+    if (!toolkit) {
+        resultsContent.innerHTML = '<p class="text-slate-400">No structured legal toolkit returned.</p>';
         return;
     }
 
-    const normalized = rawAnalysisText.replace(/\r/g, '').trim();
-    const headingApplied = normalized.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>');
-    const blocks = headingApplied.split(/\n{2,}/).map(block => block.trim()).filter(Boolean);
+    const legal = toolkit.legal_analysis || {};
+    const route = toolkit.route_recommendation || {};
+    const summary = toolkit.complaint_summary || {};
+    const rights = toolkit.rights_reminder || {};
+    
+    const sections = Array.isArray(legal.sections) ? legal.sections : [];
+    const sectionsHtml = sections.map(section => `<li class="mb-1 text-slate-300">• ${section}</li>`).join('');
 
-    const html = blocks.map(block => {
-        if (block.startsWith('<h3>')) {
-            return `${block.replace(/\n/g, '<br>')}`;
-        }
-        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
-    }).join('');
+    const tehrirText = summary.draft_text || 'No draft summary generated.';
 
-    resultsContent.innerHTML = html;
-}
+    resultsContent.innerHTML = `
+        <div class="toolkit-card toolkit-legal">
+            <h4 class="text-sky-400 font-semibold mb-3 flex items-center gap-2">
+                <i class="fas fa-book-open"></i> Legal Analysis (BNS)
+            </h4>
+            <ul class="mb-3 text-sm">${sectionsHtml}</ul>
+            <p class="text-sm text-slate-300 mb-2"><strong class="text-slate-100">Explanation:</strong> ${legal.explanation || 'N/A'}</p>
+            <p class="text-sm text-slate-300 mb-2"><strong class="text-slate-100">Nature:</strong> ${legal.nature || 'N/A'}</p>
+            <p class="text-sm text-slate-300"><strong class="text-slate-100">Punishment:</strong> ${legal.punishment || 'N/A'}</p>
+        </div>
 
-function renderError(errorMessage, container) {
-    const target = container || resultsContent;
-    target.innerHTML = `<div class="text-center p-4 bg-red-100 border border-red-300 rounded-lg">
-        <h3 class="font-semibold text-red-800">An Error Occurred</h3>
-        <p class="text-red-700">${errorMessage}</p>
-    </div>`;
-}
-
-function renderFirDraft(firData, firNarrative) {
-    lastFirFormData = firData;
-    const firHtml = buildFirHtml(firData, firNarrative);
-    firResultContent.innerHTML = firHtml;
-}
-
-function buildFirHtml(firData, firNarrative) {
-    const { incident, complainant, accused } = firData;
-    const narrativeHtml = formatNarrative(firNarrative || 'Narrative unavailable.');
-
-    return `
-        <section class="fir-sheet">
-            <header class="fir-header">
-                <div>
-                    <p class="fir-eyebrow">First Information Report · Draft Copy</p>
-                    <h3>Under Section 154 Cr.P.C.</h3>
+        <div class="toolkit-card toolkit-summary">
+            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                <h4 class="text-orange-400 font-semibold flex items-center gap-2">
+                    <i class="fas fa-file-lines"></i> ${summary.title || 'Complaint Summary'}
+                </h4>
+                <div class="flex gap-2">
+                    <button id="copy-summary-btn" class="text-xs px-3 py-1.5 bg-orange-400/20 text-orange-400 border border-orange-400/30 rounded-full hover:bg-orange-400/30 transition-colors flex items-center gap-1.5">
+                        <i class="fas fa-copy"></i> Copy Text
+                    </button>
+                    <button id="download-pdf-btn" class="text-xs px-3 py-1.5 bg-sky-400/20 text-sky-400 border border-sky-400/30 rounded-full hover:bg-sky-400/30 transition-colors flex items-center gap-1.5">
+                        <i class="fas fa-file-pdf"></i> Save PDF
+                    </button>
                 </div>
-                <div class="fir-meta">Prepared via NyayaGPT</div>
-            </header>
-
-            <div class="fir-grid">
-                <div class="fir-cell"><span>Police Station</span><p>${incident.ps || '—'}</p></div>
-                <div class="fir-cell"><span>District</span><p>${incident.dist || '—'}</p></div>
-                <div class="fir-cell"><span>FIR No.</span><p>To be assigned</p></div>
-                <div class="fir-cell"><span>Year</span><p>${new Date().getFullYear()}</p></div>
-                <div class="fir-cell"><span>Date & Time of Information</span><p>${new Date().toLocaleString()}</p></div>
-                <div class="fir-cell"><span>Date & Time of Occurrence</span><p>${incident.date || '—'} ${incident.time || ''}</p></div>
-                <div class="fir-cell"><span>Place of Occurrence</span><p>${incident.place || '—'}</p></div>
             </div>
+            <div class="mb-3">
+                <span class="inline-block px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] uppercase font-bold rounded tracking-wider">
+                    Not an official FIR - For Reference Only
+                </span>
+            </div>
+            <div class="draft-box">
+                ${tehrirText.replace(/\n/g, '<br>')}
+            </div>
+        </div>
 
-            <section class="fir-columns">
-                <article>
-                    <h4>Complainant Details</h4>
-                    <p><strong>Name:</strong> ${complainant.name || '—'}</p>
-                    <p><strong>Father/Guardian:</strong> ${complainant.guardian || '—'}</p>
-                    <p><strong>Address:</strong> ${complainant.address || '—'}</p>
-                </article>
-                <article>
-                    <h4>Accused & Witnesses</h4>
-                    <p><strong>Accused:</strong> ${accused.details || 'Unknown'}</p>
-                    <p><strong>Witnesses:</strong> ${accused.witnesses || '—'}</p>
-                </article>
-            </section>
-
-            <section class="fir-narrative">
-                <h4>Statement of Information</h4>
-                ${narrativeHtml}
-            </section>
-
-            <footer class="fir-footer">
-                <p>This document is a draft FIR generated for review. Please verify and record it in the official register before action.</p>
-                <div class="fir-signature">
-                    <div>
-                        <span>Signature of Informant</span>
-                        <p>${complainant.name || '________________'}</p>
-                    </div>
-                    <div>
-                        <span>Receiving Officer</span>
-                        <p>________________</p>
-                    </div>
-                </div>
-            </footer>
-        </section>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="toolkit-card toolkit-route">
+                <h4 class="text-emerald-400 font-semibold mb-2 flex items-center gap-2">
+                    <i class="fas fa-route"></i> Next Steps
+                </h4>
+                <p class="text-sm text-slate-300"><strong class="text-slate-100">Action:</strong> ${route.action_type || 'N/A'}</p>
+                <p class="text-sm text-slate-300 mt-1">${route.instructions || ''}</p>
+            </div>
+            <div class="toolkit-card toolkit-rights">
+                <h4 class="text-red-400 font-semibold mb-2 flex items-center gap-2">
+                    <i class="fas fa-shield-halved"></i> Know Your Rights
+                </h4>
+                <p class="text-sm text-slate-300">${rights.text || ''}</p>
+            </div>
+        </div>
     `;
+
+    // Copy to Clipboard Listener
+    document.getElementById('copy-summary-btn')?.addEventListener('click', async (e) => {
+        try {
+            await navigator.clipboard.writeText(tehrirText);
+            e.currentTarget.innerHTML = '<i class="fas fa-check"></i> Copied';
+            setTimeout(() => e.currentTarget.innerHTML = '<i class="fas fa-copy"></i> Copy Text', 2000);
+        } catch (err) {
+            alert('Failed to copy. Please select the text manually.');
+        }
+    });
+
+    // Download PDF Listener
+    document.getElementById('download-pdf-btn')?.addEventListener('click', () => {
+        downloadToolkitPdf(toolkit, incidentMeta);
+    });
 }
 
-function formatNarrative(text) {
-    const cleaned = text.replace(/\*\*(.*?)\*\*/g, '$1').trim();
-    const paragraphs = cleaned.split(/\n+/).map(p => `<p>${p}</p>`).join('');
-    return paragraphs;
+// --- New PDF Generator Function ---
+function downloadToolkitPdf(toolkit, incidentMeta) {
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) {
+        alert('PDF library failed to load. Please check your internet connection.');
+        return;
+    }
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const margin = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const maxLineWidth = pageWidth - margin * 2;
+    let y = 50;
+
+    // 1. Header & Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Citizen Complaint Summary (Tehrir)', margin, y);
+    y += 20;
+
+    // 2. Disclaimer (Red)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(220, 38, 38); 
+    doc.text('NOT AN OFFICIAL FIR - FOR REFERENCE ONLY', margin, y);
+    y += 25;
+    doc.setTextColor(0, 0, 0); // Reset text color to black
+
+    // 3. Incident Metadata
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('1. Incident Details', margin, y);
+    y += 15;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const metaLines = [
+        `Complainant: ${incidentMeta.complainant_name || 'Not Provided'}`,
+        `Accused: ${incidentMeta.accused_details || 'Not Provided'}`,
+        `Date: ${incidentMeta.incident_date || 'Not Provided'}`,
+        `Time: ${incidentMeta.incident_time || 'Not Provided'}`,
+        `Address: ${incidentMeta.incident_address || 'Not Provided'}`
+    ];
+    
+    metaLines.forEach(line => {
+        doc.text(line, margin + 10, y);
+        y += 14;
+    });
+    y += 15;
+
+    // 4. Applicable Legal Sections (BNS)
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('2. Applicable Legal Sections (BNS)', margin, y);
+    y += 15;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const sections = toolkit.legal_analysis?.sections || [];
+    if (sections.length > 0) {
+        sections.forEach(sec => {
+            const splitSec = doc.splitTextToSize(`• ${sec}`, maxLineWidth - 10);
+            doc.text(splitSec, margin + 10, y);
+            y += splitSec.length * 14;
+        });
+    } else {
+        doc.text('No specific sections identified.', margin + 10, y);
+        y += 14;
+    }
+    y += 15;
+
+    // 5. Draft Text / Narrative
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('3. Draft Complaint Narrative', margin, y);
+    y += 15;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const draftText = toolkit.complaint_summary?.draft_text || 'No narrative provided.';
+    const splitDraft = doc.splitTextToSize(draftText, maxLineWidth);
+    
+    // Ensure text wraps properly and creates new pages if it gets too long
+    splitDraft.forEach(line => {
+        if (y > doc.internal.pageSize.getHeight() - margin) {
+            doc.addPage();
+            y = margin;
+        }
+        doc.text(line, margin, y);
+        y += 14;
+    });
+
+    // Save the Document
+    doc.save('NyayaGPT_Complaint_Summary.pdf');
+}
+
+function renderError(errorMessage) {
+    resultsContent.innerHTML = `
+        <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+            <h3 class="text-red-400 font-semibold mb-1"><i class="fas fa-triangle-exclamation"></i> Error</h3>
+            <p class="text-sm text-slate-300">${errorMessage}</p>
+        </div>`;
 }

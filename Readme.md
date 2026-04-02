@@ -2,13 +2,13 @@
 
 ### Your AI-Powered Guide to Indian Criminal Law
 
-**Nyay Sahayak** is an intelligent legal assistant designed to bridge the gap between complex legal jargon and the common man. Built using **Retrieval-Augmented Generation (RAG)**, it instantly maps real-world crime descriptions to the relevant sections of the **Indian Penal Code (IPC)** and helps users draft official **First Information Reports (FIR)**.
+**Nyay Sahayak** is an intelligent legal assistant designed to bridge the gap between complex legal jargon and the common man. Built using **Retrieval-Augmented Generation (RAG)**, it instantly maps real-world crime descriptions to relevant sections of the **Bharatiya Nyaya Sanhita (BNS)** and helps users draft official **First Information Reports (FIR)**.
 
 ---
 
 ## 🚀 Key Features
 
-* **🔍 Instant Legal Analysis:** Describe a crime in plain English (e.g., *"A man broke into my house at night and threatened me"*), and the AI identifies the applicable IPC sections (e.g., Section 446, Section 506).
+* **🔍 Instant Legal Analysis:** Describe a crime in plain English (e.g., *"A man broke into my house at night and threatened me"*), and the AI identifies the applicable BNS sections.
 * **🧠 RAG Architecture:** Unlike standard chatbots, Nyay Sahayak retrieves exact legal text from a verified knowledge base before generating answers, ensuring accuracy and reducing hallucinations.
 * **📝 Guided FIR Generator:** A step-by-step wizard that helps users structure a formal police complaint (FIR) based on the incident analysis.
 * **⚡ Modern Tech Stack:** Powered by Google's **Gemini API**, **ChromaDB** for vector search, and a fast **FastAPI** backend.
@@ -27,7 +27,7 @@
 ## ⚙️ Architecture
 
 Nyay Sahayak uses a **Retrieval-Augmented Generation (RAG)** pipeline:
-1.  **Ingestion:** The Indian Penal Code (IPC) text is embedded into vectors and stored in **ChromaDB**.
+1.  **Ingestion:** The BNS dataset is embedded into vectors and stored in **ChromaDB**.
 2.  **Retrieval:** User queries are converted to vectors; the system searches the database for the most relevant legal sections.
 3.  **Generation:** The retrieved legal context + user query are sent to **Google Gemini**, which generates a fact-based analysis.
 
@@ -70,9 +70,10 @@ Follow these steps to set up the project locally.
     ```
 
 5.  **Build the Knowledge Base**
-    Run the ingestion script to create the vector database:
+    Download the Kaggle BNS dataset and place the exported file in `backend/data/` (recommended filename: `bns_data.csv`).
+    Then run the ingestion script to create the vector database:
     ```bash
-    python ingest.py
+    python scripts/ingest.py
     ```
 
 6.  **Run the Server**
@@ -87,7 +88,7 @@ Follow these steps to set up the project locally.
 
 ## 🔮 Roadmap
 
-* [ ] **Full Legal Database:** Integrate CrPC (Criminal Procedure Code) and Indian Evidence Act.
+* [ ] **Full Legal Database:** Expand BNS annotations and integrate BNSS / Bharatiya Sakshya Adhiniyam references.
 * [ ] **Multilingual Support:** Add Hindi and regional language support for wider accessibility.
 * [ ] **Voice Input:** Allow users to describe incidents verbally.
 * [ ] **Citation Library:** Link real-world case law judgments to analysis.
