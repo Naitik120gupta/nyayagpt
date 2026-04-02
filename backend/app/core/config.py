@@ -10,7 +10,7 @@ class Settings:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     VECTOR_STORE_DIR = os.path.join(BASE_DIR, "vector_store")
     DATA_DIR = os.path.join(BASE_DIR, "data")
-    IPC_DATA_PATH = os.path.join(DATA_DIR, "ipc_data.txt")
+    BNS_DATA_PATH = os.getenv("BNS_DATA_PATH", os.path.join(DATA_DIR, "bns_data.csv"))
 
     # Gemini
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -18,6 +18,6 @@ class Settings:
     GENERATION_MODEL = "models/gemini-2.5-flash"
 
     # ChromaDB
-    COLLECTION_NAME = "indian_penal_code"
+    COLLECTION_NAME = "bharatiya_nyaya_sanhita"
 
 settings = Settings()
