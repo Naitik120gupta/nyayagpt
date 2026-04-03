@@ -60,8 +60,22 @@
                     <textarea id="crime-description" rows="6" class="ghost-input w-full resize-none" placeholder="Describe exactly what happened... e.g., 'Someone broke the lock of my shop last night and took goods worth ₹50,000.'"></textarea>
                 </div>
 
+                <div id="smart-prefill-form" class="hidden flex flex-col gap-4 border border-white/10 rounded-xl p-4 bg-slate-900/40">
+                    <h4 class="text-sm font-semibold text-emerald-300 uppercase tracking-wider">FIR Preparation Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input id="complainant-address" type="text" class="ghost-input" placeholder="Complainant Address">
+                        <input id="police-station" type="text" class="ghost-input" placeholder="Police Station (for filing)">
+                    </div>
+                    <textarea id="witness-details" rows="3" class="ghost-input w-full resize-none" placeholder="Witness details (if any)"></textarea>
+                    <textarea id="additional-facts" rows="3" class="ghost-input w-full resize-none" placeholder="Additional useful facts for pre-fill (optional)"></textarea>
+                </div>
+
                 <button id="analyze-btn" class="primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(52,211,153,0.2)]">
                     <i class="fas fa-gavel mr-2"></i> Generate Legal Toolkit
+                </button>
+
+                <button id="generate-prefill-btn" class="hidden primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-sky-400 hover:bg-sky-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                    <i class="fas fa-file-lines mr-2"></i> Generate FIR Preparation Summary
                 </button>
                 <p class="text-xs text-center text-slate-500 mt-2">Outputs are for reference only and do not constitute legal counsel.</p>
             </div>

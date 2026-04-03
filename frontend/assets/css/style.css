@@ -51,6 +51,18 @@ body {
     background: rgba(15, 23, 42, 0.9);
 }
 
+input[type="date"],
+input[type="time"] {
+    color-scheme: lights;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0.9);
+    opacity: 0.9;
+    cursor: pointer;
+}
+
 /* Custom Scrollbar for Dashboard feel */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
