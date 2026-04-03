@@ -94,9 +94,10 @@ Follow these steps to set up the project locally.
 * [ ] **Citation Library:** Link real-world case law judgments to analysis.
 
 ---
-
-### Copyright 
-© 2026 Naitik Gupta. All Rights Reserved. This codebase is not licensed for commercial use, distribution, or modification without explicit written permission.
+## 📄 License
+© 2026 Naitik Gupta. All Rights Reserved.
+This project is proprietary software. Unauthorized copying, modification,
+or distribution is strictly prohibited. See [LICENSE](LICENSE) for details.
 
 ---
 
