@@ -95,9 +95,8 @@ Follow these steps to set up the project locally.
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please fork the repository and submit a Pull Request.
+### Copyright 
+© 2026 Naitik Gupta. All Rights Reserved. This codebase is not licensed for commercial use, distribution, or modification without explicit written permission.
 
 ---
 
