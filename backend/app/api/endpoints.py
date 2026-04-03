@@ -35,23 +35,30 @@ def _extract_json_payload(raw_text: str) -> Dict[str, Any]:
 
 def _toolkit_fallback() -> Dict[str, Any]:
     return {
+        "validation_layer": {
+            "is_valid": False,
+            "warnings": [
+                "Unable to complete AI validation. Please verify incident date, time, complainant, accused details, and chronology manually before filing."
+            ],
+            "offense_category": "Cognizable"
+        },
         "legal_analysis": {
             "sections": [],
             "explanation": "Unable to produce legal analysis at the moment.",
+            "nature": "Not available",
             "punishment": "Not available"
         },
         "route_recommendation": {
             "action_type": "Physical Station Visit",
+            "portal_link": None,
             "instructions": "Carry identity proof, incident evidence, and any witness details to the nearest police station or legal aid center."
         },
-        "complaint_summary": {
-            "title": "Your Complaint Summary (Tehrir)",
-            "disclaimer": "This is a summary to help you file, NOT an official police document.",
-            "draft_text": "Please retry with clearer incident details (who, what, when, where, how) to generate a complaint summary."
+        "smart_pre_fill": {
+            "title": "FIR Preparation Summary",
+            "draft_text": "Please retry with clearer incident details (who, what, when, where, how) to generate Smart FIR pre-fill data for CCTNS IIF-1 preparation."
         },
         "rights_reminder": {
-            "title": "Know Your Rights",
-            "text": "Under BNSS Section 173, police cannot refuse FIR registration for cognizable offences. If refused, approach the SP or magistrate under BNSS Section 175."
+            "text": "Under BNSS Section 173, police must register information relating to cognizable offences. If refused, escalate to the Superintendent of Police or approach the Magistrate under BNSS remedies."
         }
     }
 
@@ -68,6 +75,10 @@ class QueryRequest(BaseModel):
     incident_address: Optional[str] = None
     incident_time: Optional[str] = None
     incident_date: Optional[str] = None
+    complainant_address: Optional[str] = None
+    police_station: Optional[str] = None
+    witness_details: Optional[str] = None
+    additional_facts: Optional[str] = None
 
 class FirDataRequest(BaseModel):
     firData: Dict[str, Any]
@@ -96,32 +107,53 @@ async def analyze_crime(
 
         logger.info("Step 3: Generating structured toolkit response...")
         analysis_prompt = f"""
-You are NyayaGPT, a citizen legal empowerment assistant for Indian criminal law.
+You are NyayaGPT, an AI legal assistant for Indian criminal law focused on citizen FIR preparation.
 
-Analyze the incident using ONLY the provided legal context. Do not invent laws or facts.
-Output STRICT JSON only. Do NOT use markdown, backticks, or extra keys.
+STRICT LEGAL SCOPE:
+- Use ONLY Bharatiya Nyaya Sanhita, 2023 (BNS) and Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS).
+- COMPLETELY IGNORE IPC and CrPC references even if mentioned by user.
+- Do not invent sections, procedures, punishments, links, or facts.
+
+OUTPUT RULES:
+- Return STRICT JSON only.
+- No markdown, no backticks, no prose outside JSON.
+- Top-level object MUST contain exactly these 5 keys and no others:
+    1) validation_layer
+    2) legal_analysis
+    3) route_recommendation
+    4) smart_pre_fill
+    5) rights_reminder
 
 Required JSON schema:
 {{
+    "validation_layer": {{
+        "is_valid": true,
+        "warnings": ["List logical consistency warnings if any, else empty array"],
+        "offense_category": "Cognizable or Non-Cognizable"
+    }},
     "legal_analysis": {{
-        "sections": ["e.g., BNS Section 303 (Theft)", "BNS Section 331 (House Trespass)"],
-        "explanation": "Plain language explanation of what these sections mean.",
-        "punishment": "Maximum punishment details."
+        "sections": ["BNS Section 303(2) (Theft)"],
+        "explanation": "Plain-language explanation based on BNS/BNSS context.",
+        "nature": "Cognizable/Non-Cognizable and Bailable/Non-Bailable, if inferable from given context.",
+        "punishment": "Maximum punishment details from available context."
     }},
     "route_recommendation": {{
-        "action_type": "Online e-FIR OR Physical Station Visit",
-        "instructions": "If online, instruct use of state CCTNS portal; if physical, list documents/evidence to carry."
+        "action_type": "Online e-FIR Portal OR Physical Station Visit",
+        "portal_link": "State e-FIR portal URL if confidently inferable, otherwise null",
+        "instructions": "Actionable filing guidance for citizen."
     }},
-    "complaint_summary": {{
-        "title": "Your Complaint Summary (Tehrir)",
-        "disclaimer": "This is a summary to help you file, NOT an official police document.",
-        "draft_text": "A highly professional first-person chronological narrative (Who, What, When, Where, How)."
+    "smart_pre_fill": {{
+        "title": "FIR Preparation Summary",
+        "draft_text": "Chronological first-person narrative suitable as pre-fill data for CCTNS IIF-1."
     }},
     "rights_reminder": {{
-        "title": "Know Your Rights",
-        "text": "Under BNSS Section 173, police cannot refuse to register an FIR for a cognizable offense. If they refuse, you can approach the Superintendent of Police or file a complaint before a magistrate under BNSS Section 175."
+        "text": "Rights reminder referencing BNSS Section 173."
     }}
 }}
+
+VALIDATION REQUIREMENTS:
+- In validation_layer.warnings, flag logical issues such as missing date/time/place, contradictory sequence, complainant and accused appearing identical without explanation, or unclear accused identity.
+- Set validation_layer.is_valid to false if major critical facts are missing or contradictory; otherwise true.
 
 CONTEXT:
 {retrieved_context}
@@ -129,12 +161,16 @@ CONTEXT:
 USER INCIDENT:
 {request.query}
 
-INCIDENT DETAILS (use when available and relevant in complaint_summary.draft_text):
+INCIDENT DETAILS (use in smart_pre_fill.draft_text and validation checks):
 - Complainant Name: {request.complainant_name or 'Not provided'}
+- Complainant Address: {request.complainant_address or 'Not provided'}
 - Accused Details: {request.accused_details or 'Not provided'}
 - Incident Address: {request.incident_address or 'Not provided'}
 - Incident Time: {request.incident_time or 'Not provided'}
 - Incident Date: {request.incident_date or 'Not provided'}
+- Police Station (if known): {request.police_station or 'Not provided'}
+- Witness Details: {request.witness_details or 'Not provided'}
+- Additional Facts: {request.additional_facts or 'Not provided'}
 """
 
         analysis_text = gemini_service.generate_content(analysis_prompt)
