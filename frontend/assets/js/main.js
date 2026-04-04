@@ -20,7 +20,7 @@ const resultsContent = document.getElementById('results-content');
 const voiceBtn = document.getElementById('voice-input-btn');
 
 // --- API Configuration ---
-const REMOTE_API_URL = 'https://nyayagpt.onrender.com';
+const REMOTE_API_URL = 'https://api.nyayagpt.in';
 const LOCAL_API_URL = 'http://localhost:8000';
 const urlParams = new URLSearchParams(window.location.search);
 const preferLocalApi = urlParams.get('api') === 'local';
