@@ -23,15 +23,85 @@ const voiceBtn = document.getElementById('voice-input-btn');
 const REMOTE_API_URL = 'https://api.nyayagpt.in';
 const LOCAL_API_URL = 'http://localhost:8000';
 const urlParams = new URLSearchParams(window.location.search);
-const preferLocalApi = urlParams.get('api') === 'local';
+const apiMode = urlParams.get('api');
+const isLocalRuntime =
+    window.location.protocol === 'file:' ||
+    ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const preferLocalApi = apiMode === 'local' || (apiMode !== 'remote' && isLocalRuntime);
 const API_BASE_URL = preferLocalApi ? LOCAL_API_URL : REMOTE_API_URL;
 
 let lastLegalToolkit = null;
 let lastIncidentMeta = null;
+const DRAFT_STORAGE_KEY = 'nyayagpt_incident_draft_v1';
+
+const draftFields = {
+    crime_description: crimeDescription,
+    complainant_name: complainantName,
+    accused_details: accusedDetails,
+    incident_address: incidentAddress,
+    incident_date: incidentDate,
+    incident_time: incidentTime,
+    complainant_address: complainantAddress,
+    police_station: policeStation,
+    witness_details: witnessDetails,
+    additional_facts: additionalFacts,
+};
+
+function saveDraftToSessionStorage() {
+    const payload = {};
+    Object.entries(draftFields).forEach(([key, element]) => {
+        payload[key] = element?.value ?? '';
+    });
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function restoreDraftFromSessionStorage() {
+    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return;
+
+    try {
+        const payload = JSON.parse(raw);
+        Object.entries(draftFields).forEach(([key, element]) => {
+            if (element && typeof payload[key] === 'string') {
+                element.value = payload[key];
+            }
+        });
+    } catch {
+        sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
+}
+
+restoreDraftFromSessionStorage();
+Object.values(draftFields).forEach((element) => {
+    if (element) element.addEventListener('input', saveDraftToSessionStorage);
+});
+
+async function parseApiResponse(response) {
+    const rawBody = await response.text();
+    let parsedBody = null;
+
+    if (rawBody) {
+        try {
+            parsedBody = JSON.parse(rawBody);
+        } catch {
+            throw new Error(`Backend returned non-JSON response: ${rawBody.slice(0, 200)}`);
+        }
+    }
+
+    if (!response.ok) {
+        const detail = parsedBody?.detail || parsedBody?.error || `HTTP ${response.status}`;
+        throw new Error(`API request failed: ${detail}`);
+    }
+
+    return parsedBody || {};
+}
 
 // --- Analyze Logic ---
 if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', async () => {
+    analyzeBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
         const incidentDescription = crimeDescription.value;
         if (incidentDescription.trim() === '') {
             alert('Please describe the incident first.');
@@ -45,6 +115,7 @@ if (analyzeBtn) {
             incident_date: incidentDate?.value || '',
             incident_time: incidentTime?.value || '',
         };
+        saveDraftToSessionStorage();
 
         // UI State Updates
         emptyState.classList.add('hidden');
@@ -61,11 +132,7 @@ if (analyzeBtn) {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
+            const apiResponse = await parseApiResponse(response);
             
             loadingSpinner.classList.add('hidden');
             resultsContent.classList.remove('hidden');
@@ -87,13 +154,16 @@ if (analyzeBtn) {
             console.error("Error calling the API:", error);
             loadingSpinner.classList.add('hidden');
             resultsContent.classList.remove('hidden');
-            renderError(`Could not connect to NyayaGPT services. Ensure backend is running.`);
+            renderError(error?.message || 'Unable to process request.');
         }
     });
 }
 
 if (generatePreFillBtn) {
-    generatePreFillBtn.addEventListener('click', async () => {
+    generatePreFillBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
         const incidentDescription = crimeDescription.value;
         if (incidentDescription.trim() === '') {
             alert('Please describe the incident first.');
@@ -111,6 +181,7 @@ if (generatePreFillBtn) {
             witness_details: witnessDetails?.value?.trim() || '',
             additional_facts: additionalFacts?.value?.trim() || '',
         };
+        saveDraftToSessionStorage();
 
         emptyState.classList.add('hidden');
         resultsContent.classList.add('hidden');
@@ -126,11 +197,7 @@ if (generatePreFillBtn) {
                 }),
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
+            const apiResponse = await parseApiResponse(response);
             loadingSpinner.classList.add('hidden');
             resultsContent.classList.remove('hidden');
 
@@ -145,7 +212,7 @@ if (generatePreFillBtn) {
             console.error('Error calling the API:', error);
             loadingSpinner.classList.add('hidden');
             resultsContent.classList.remove('hidden');
-            renderError('Could not connect to NyayaGPT services. Ensure backend is running.');
+            renderError(error?.message || 'Unable to process request.');
         }
     });
 }
@@ -162,7 +229,10 @@ if (voiceBtn) {
 
         let isRecording = false;
 
-        voiceBtn.addEventListener('click', () => {
+        voiceBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
             if (isRecording) {
                 recognition.stop();
             } else {

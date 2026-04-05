@@ -43,7 +43,7 @@
             <div class="main-card flex flex-col gap-5">
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
                     <h3 class="font-semibold text-slate-200">Incident Details</h3>
-                    <button id="voice-input-btn" class="text-xs px-3 py-1.5 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors flex items-center gap-2">
+                    <button type="button" id="voice-input-btn" class="text-xs px-3 py-1.5 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors flex items-center gap-2">
                         <i class="fas fa-microphone"></i> Dictate
                     </button>
                 </div>
@@ -70,11 +70,11 @@
                     <textarea id="additional-facts" rows="3" class="ghost-input w-full resize-none" placeholder="Additional useful facts for pre-fill (optional)"></textarea>
                 </div>
 
-                <button id="analyze-btn" class="primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(52,211,153,0.2)]">
+                <button type="button" id="analyze-btn" class="primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(52,211,153,0.2)]">
                     <i class="fas fa-gavel mr-2"></i> Generate Legal Toolkit
                 </button>
 
-                <button id="generate-prefill-btn" class="hidden primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-sky-400 hover:bg-sky-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                <button type="button" id="generate-prefill-btn" class="hidden primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-sky-400 hover:bg-sky-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(56,189,248,0.2)]">
                     <i class="fas fa-file-lines mr-2"></i> Generate FIR Preparation Summary
                 </button>
                 <p class="text-xs text-center text-slate-500 mt-2">Outputs are for reference only and do not constitute legal counsel.</p>
