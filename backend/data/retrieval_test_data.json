@@ -1,0 +1,22 @@
+[
+  {
+    "query": "मेरे घर में रात को चोरी हुई",
+    "expected_section": "303"
+  },
+  {
+    "query": "Someone threatened me and attacked me near my house",
+    "expected_section": "126"
+  },
+  {
+    "query": "Mere saath dhokha hua, paise lekar wapas nahi diye",
+    "expected_section": "318"
+  },
+  {
+    "query": "A person entered my house without permission",
+    "expected_section": "329"
+  },
+  {
+    "query": "Ek aadmi ne public place pe mujhe maara",
+    "expected_section": "115"
+  }
+]
