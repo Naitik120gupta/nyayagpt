@@ -6,3 +6,5 @@ chromadb
 python-dotenv
 numpy
 onnxruntime
+sentence-transformers
+torch

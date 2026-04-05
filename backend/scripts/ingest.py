@@ -2,16 +2,22 @@ import os
 import sys
 import logging
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, ".."))
+
+for path in (BACKEND_DIR, PROJECT_ROOT):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 try:
-    from backend.app.core.config import settings
-    from backend.app.services.ingestion import ingest_legal_corpus
-except ModuleNotFoundError as error:
-    if not (error.name or "").startswith("backend"):
-        raise
     from app.core.config import settings
     from app.services.ingestion import ingest_legal_corpus
+except ModuleNotFoundError as error:
+    if not (error.name or "").startswith("app"):
+        raise
+    from backend.app.core.config import settings
+    from backend.app.services.ingestion import ingest_legal_corpus
 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
