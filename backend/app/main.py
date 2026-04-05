@@ -35,11 +35,22 @@ logging.basicConfig(
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
-# For deployment, allow all origins by default (credentials must be False for wildcard)
-# Or configure specific domains if needed
+allowed_origins = [
+    "https://nyayagpt.in",
+    "https://www.nyayagpt.in",
+    "https://nyayagpt.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "null",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
