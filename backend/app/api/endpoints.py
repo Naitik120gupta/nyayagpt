@@ -92,11 +92,8 @@ async def analyze_crime(
     logger.info(f"Received API call to /analyze with query: {request.query}")
 
     try:
-        logger.info("Step 1: Embedding user query...")
-        embedded_query = gemini_service.get_embedding(request.query)
-
-        logger.info("Step 2: Retrieving relevant sections...")
-        documents = rag_service.query_similar_documents(embedded_query)
+        logger.info("Step 1: Running multilingual retrieval...")
+        documents = rag_service.query_similar_documents(request.query)
 
         if not documents:
             logger.warning("No relevant documents found.")
