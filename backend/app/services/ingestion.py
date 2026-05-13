@@ -37,22 +37,69 @@ def _first_non_empty(record: dict, candidate_keys: List[str]) -> str:
     return ""
 
 
-def _chunk_text(text: str, chunk_size_words: int, overlap_words: int) -> List[str]:
-    words = (text or "").split()
-    if not words:
-        return []
-    if len(words) <= chunk_size_words:
-        return [" ".join(words)]
+_SENTENCE_SPLIT_RE = re.compile(
+    r"(?<=[.;])\s+(?=[A-Z\(\"])"   # period/semicolon → capital or open-paren
+    r"|(?<=:)\s+(?=[A-Z\(\"])"      # colon → capital or open-paren
+    r"|(?=\s+\([a-z]\)\s)"          # before lettered clause  (a) (b) …
+    r"|(?=\s+\(\d+\)\s)"            # before numbered clause  (1) (2) …
+)
 
-    chunks = []
-    step = max(1, chunk_size_words - overlap_words)
-    for start in range(0, len(words), step):
-        chunk = words[start : start + chunk_size_words]
-        if not chunk:
+
+def _split_into_sentences(text: str) -> List[str]:
+    parts = _SENTENCE_SPLIT_RE.split(text.strip())
+    return [p.strip() for p in parts if p.strip()]
+
+
+def _chunk_text(text: str, chunk_size_words: int, overlap_words: int) -> List[str]:
+    """Sentence-boundary-aware chunking.
+
+    Accumulates sentences until the running word count would exceed
+    *chunk_size_words*, then starts a new chunk with the last few sentences
+    as context (overlap).  This keeps sentences intact and makes every chunk
+    begin and end at a natural boundary.
+    """
+    sentences = _split_into_sentences(text or "")
+    if not sentences:
+        return []
+
+    def _word_count(s: str) -> int:
+        return len(s.split())
+
+    chunks: List[str] = []
+    current: List[str] = []
+    current_words = 0
+
+    for sentence in sentences:
+        sw = _word_count(sentence)
+
+        # If a single sentence exceeds the chunk size, emit it alone.
+        if sw >= chunk_size_words:
+            if current:
+                chunks.append(" ".join(current))
+                current, current_words = [], 0
+            chunks.append(sentence)
             continue
-        chunks.append(" ".join(chunk))
-        if start + chunk_size_words >= len(words):
-            break
+
+        if current_words + sw > chunk_size_words and current:
+            chunks.append(" ".join(current))
+            # Carry-over: keep trailing sentences whose total ≤ overlap_words.
+            overlap: List[str] = []
+            overlap_total = 0
+            for s in reversed(current):
+                sw2 = _word_count(s)
+                if overlap_total + sw2 <= overlap_words:
+                    overlap.insert(0, s)
+                    overlap_total += sw2
+                else:
+                    break
+            current, current_words = overlap, overlap_total
+
+        current.append(sentence)
+        current_words += sw
+
+    if current:
+        chunks.append(" ".join(current))
+
     return chunks
 
 
@@ -72,6 +119,7 @@ def _sections_from_txt(raw_legal_text: str):
                 "section_number": section_no,
                 "section_title": title,
                 "full_text": description,
+                "plain_language": "",
             }
         )
     return legal_sections
@@ -102,6 +150,7 @@ def _sections_from_csv(csv_path: str):
                 ["description", "text", "details", "content", "provision", "punishment"],
             )
             act_name = _first_non_empty(row, ["act", "actname", "law", "code", "chaptername"]) or "BNS"
+            plain_language = _first_non_empty(row, ["plainlanguage", "plain_language", "synonyms", "keywords"])
 
             if not (section_no or title or description):
                 continue
@@ -112,6 +161,7 @@ def _sections_from_csv(csv_path: str):
                     "section_number": section_no or f"ROW-{index}",
                     "section_title": title or "Untitled",
                     "full_text": description or "",
+                    "plain_language": plain_language,
                 }
             )
     return legal_sections
@@ -150,6 +200,7 @@ def _sections_from_json(json_path: str):
             ["description", "text", "details", "content", "provision", "punishment"],
         )
         act_name = _first_non_empty(row, ["act", "actname", "law", "code", "chaptername"]) or "BNS"
+        plain_language = _first_non_empty(row, ["plainlanguage", "plain_language", "synonyms", "keywords"])
 
         if not (section_no or title or description):
             continue
@@ -160,6 +211,7 @@ def _sections_from_json(json_path: str):
                 "section_number": section_no or f"ROW-{index}",
                 "section_title": title or "Untitled",
                 "full_text": description or "",
+                "plain_language": plain_language,
             }
         )
 
@@ -187,6 +239,7 @@ def build_chunks(sections: List[Dict[str, str]]) -> List[Dict[str, object]]:
         section_number = section["section_number"]
         section_title = section["section_title"]
         full_text = section["full_text"]
+        plain_language = section.get("plain_language", "")
 
         chunks = _chunk_text(
             full_text,
@@ -195,7 +248,10 @@ def build_chunks(sections: List[Dict[str, str]]) -> List[Dict[str, object]]:
         ) or [full_text]
 
         for chunk_index, chunk_text in enumerate(chunks):
-            document = f"{act_name} Section {section_number}: {section_title}. {chunk_text}".strip()
+            # Append plain-language synonyms to the first chunk only so the
+            # embedding captures colloquial search terms without bloating every chunk.
+            suffix = f" [also known as: {plain_language}]" if plain_language and chunk_index == 0 else ""
+            document = f"{act_name} Section {section_number}: {section_title}. {chunk_text}{suffix}".strip()
             chunked_rows.append(
                 {
                     "id": f"{_sanitize_id(act_name)}_{_sanitize_id(section_number)}_{chunk_index}",
@@ -238,7 +294,10 @@ def ingest_legal_corpus(data_path: str | None = None) -> int:
     except Exception as error:
         logger.warning("Collection cleanup warning: %s", error)
 
-    collection = client.create_collection(name=settings.COLLECTION_NAME)
+    collection = client.create_collection(
+        name=settings.COLLECTION_NAME,
+        metadata={"hnsw:space": "cosine"},
+    )
     collection.add(
         ids=[row["id"] for row in chunk_rows],
         documents=[row["document"] for row in chunk_rows],

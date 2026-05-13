@@ -59,21 +59,8 @@ class InLegalBERTEmbeddingService:
             self.device,
             self.use_safetensors,
         )
-        word_embedding_model = Transformer(
-            self.model_name,
-            cache_dir=self.model_cache_dir,
-            model_args={"use_safetensors": self.use_safetensors},
-        )
-        pooling_model = Pooling(
-            word_embedding_model.get_word_embedding_dimension(),
-            pooling_mode_mean_tokens=True,
-            pooling_mode_cls_token=False,
-            pooling_mode_max_tokens=False,
-        )
-        normalize_model = Normalize()
-
         self.model = SentenceTransformer(
-            modules=[word_embedding_model, pooling_model, normalize_model],
+            self.model_name,
             device=self.device,
             cache_folder=self.model_cache_dir,
         )

@@ -25,6 +25,8 @@ class RAGService:
         try:
             payload = self.retriever.retrieve(query_text, k=n_results)
             return [item["document"] for item in payload.get("results", [])]
+        except ValueError:
+            raise
         except Exception as e:
             logger.error(f"Error querying vector database: {e}")
             return []

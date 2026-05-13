@@ -181,6 +181,9 @@ INCIDENT DETAILS (use in smart_pre_fill.draft_text and validation checks):
 
         return {"analysis": analysis_payload}
 
+    except ValueError as e:
+        logger.warning(f"Retrieval threshold not met: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error processing /analyze request: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -46,14 +46,12 @@ class MultilingualLegalRetriever:
             raise ValueError("Only English queries are supported")
 
         normalized_query = _normalize_query(query)
-        prefixed_query = f"legal query: {normalized_query}" if normalized_query else ""
-        query_embedding = self.embedding_service.embed_query(prefixed_query)
+        query_embedding = self.embedding_service.embed_query(normalized_query)
 
         if not query_embedding:
             return {
                 "query": query,
                 "normalized_query": normalized_query,
-                "prefixed_query": prefixed_query,
                 "results": [],
             }
 
@@ -73,20 +71,47 @@ class MultilingualLegalRetriever:
             metadata = metadatas[index] if index < len(metadatas) else {}
             distance = distances[index] if index < len(distances) else None
             item_id = ids[index] if index < len(ids) else None
+            # Convert distance to similarity score (score = 1 − distance).
+            # ChromaDB cosine distance is in [0, 2]; L2 distances for
+            # unit-normalised embeddings behave similarly near the origin.
+            score = (1.0 - distance) if distance is not None else 1.0
             results.append(
                 {
                     "id": item_id,
                     "document": document,
                     "metadata": metadata or {},
                     "distance": distance,
+                    "score": score,
                 }
+            )
+
+        if not results:
+            raise ValueError(
+                "No relevant BNS sections were found in the vector index for this query. "
+                "Please re-ingest the legal dataset and try again."
+            )
+
+        thresholded_results = [
+            result for result in results if result.get("score", 1.0) >= settings.MIN_RELEVANCE_SCORE
+        ]
+
+        if thresholded_results:
+            selected_results = thresholded_results
+        else:
+            fallback_size = min(3, len(results))
+            selected_results = results[:fallback_size]
+            logger.warning(
+                "Retrieval threshold %.2f filtered all candidates for query '%s'. "
+                "Falling back to top %s raw matches.",
+                settings.MIN_RELEVANCE_SCORE,
+                normalized_query,
+                fallback_size,
             )
 
         return {
             "query": query,
             "normalized_query": normalized_query,
-            "prefixed_query": prefixed_query,
-            "results": results,
+            "results": selected_results,
         }
 
     def evaluate_top_k(self, test_data: List[Dict[str, Any]], k: int = 5) -> Dict[str, Any]:
