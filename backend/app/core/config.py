@@ -25,7 +25,7 @@ class Settings:
     # 0 = never expire
     GEMINI_CACHE_TTL_SECONDS = int(os.getenv("GEMINI_CACHE_TTL_SECONDS", "86400"))
 
-    # Local Embeddings (InLegalBERT)
+    # Local Embeddings (InLegalBERT) #Now sentence-transformers/all-MiniLM-L6-v2 is used for embeddings
     LOCAL_EMBEDDING_MODEL = os.getenv("LOCAL_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
     EMBEDDING_DEVICE = os.getenv("EMBEDDING_DEVICE", "")
     EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "64"))
