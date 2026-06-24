@@ -4,208 +4,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nyay Sahayak - Legal Guide</title>
+    <title>NyayaGPT — Citizen Legal Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
-            /* A light, professional blue-gray */
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Custom styles for a more polished look */
-        .main-card {
-            background-color: white;
-            border-radius: 1.5rem;
-            /* More rounded corners */
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-            transition: all 0.3s ease-in-out;
-        }
-
-        .main-button {
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        }
-
-        .main-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
-        }
-
-        #results-content h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1e3a8a;
-            /* A deeper blue for titles */
-            margin-bottom: 0.5rem;
-        }
-
-        #results-content p {
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-
-        #results-content strong {
-            color: #1e293b;
-            /* slate-800 */
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
-<body class="flex items-center justify-center min-h-screen">
+<body class="bg-slate-950 text-slate-100 antialiased h-screen overflow-hidden flex flex-col">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
 
-    <div class="container mx-auto max-w-2xl p-4 w-full">
-        <!-- Header -->
-        <header class="text-center mb-6">
-            <div class="inline-block bg-blue-600 text-white p-3 rounded-full mb-2">
-                <i class="fas fa-balance-scale fa-2x"></i>
+    <header class="relative z-10 px-6 py-4 border-b border-white/10 flex justify-between items-center bg-slate-950/50 backdrop-blur-md shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="brand-icon text-emerald-400 text-xl flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-400/10 border border-emerald-400/20">
+                <i class="fas fa-scale-balanced"></i>
             </div>
-            <h1 class="text-4xl font-bold text-gray-800">Nyay Sahayak</h1>
-            <p class="text-gray-500 mt-1">Your AI-Powered Guide to Indian Criminal Law</p>
-        </header>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">NyayaGPT</h1>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Citizen Legal Assistant</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300">BNS Updated</span>
+        </div>
+    </header>
 
-        <!-- Main App Body -->
-        <main class="flex-grow">
-            <!-- Analyze Screen -->
-            <div id="screen-analyze" class="main-card p-8 fade-in">
-                <label for="crime-description" class="block text-lg font-semibold mb-3 text-gray-700">Describe the
-                    incident:</label>
-                <textarea id="crime-description" rows="8"
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    placeholder="e.g., 'A person broke into a house at night and stole jewelry.'"></textarea>
-                <button id="analyze-btn"
-                    class="mt-6 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 main-button flex items-center justify-center">
-                    <i class="fas fa-gavel mr-2"></i>
-                    Analyze Incident
-                </button>
+    <main class="relative z-10 flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+        
+        <section class="lg:col-span-5 flex flex-col h-full overflow-y-auto custom-scrollbar pr-2 pb-10">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-3 tracking-tight">Structure your legal complaint.</h2>
+                <p class="text-slate-400 leading-relaxed">
+                    Describe your incident in plain English. NyayaGPT helps identify the relevant Bharatiya Nyaya Sanhita (BNS) sections and formats a structured complaint summary for your reference.
+                </p>
             </div>
 
-            <!-- Results Screen -->
-            <div id="screen-results" class="main-card p-8 fade-in hidden">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-800">Analysis Report</h2>
-                        <p class="text-sm text-gray-500">Based on your description:</p>
-                    </div>
-                    <button id="back-btn" class="text-gray-400 hover:text-gray-600 transition">
-                        <i class="fas fa-times fa-lg"></i>
+            <div class="main-card flex flex-col gap-5">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                    <h3 class="font-semibold text-slate-200">Incident Details</h3>
+                    <button type="button" id="voice-input-btn" class="text-xs px-3 py-1.5 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors flex items-center gap-2">
+                        <i class="fas fa-microphone"></i> Dictate
                     </button>
                 </div>
-                <p id="user-query-display"
-                    class="bg-gray-100 p-3 rounded-lg mb-6 text-gray-700 border border-gray-200 italic"></p>
 
-                <div id="loading-spinner" class="text-center py-8 hidden">
-                    <i class="fas fa-spinner fa-spin fa-3x text-blue-500"></i>
-                    <p class="mt-2 text-gray-600">Analyzing legal parameters...</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <input id="complainant-name" type="text" class="ghost-input" placeholder="Your Name">
+                    <input id="accused-details" type="text" class="ghost-input" placeholder="Accused (or Unknown)">
+                    <input id="incident-date" type="date" class="ghost-input text-slate-400">
+                    <input id="incident-time" type="time" class="ghost-input text-slate-400">
+                </div>
+                <input id="incident-address" type="text" class="ghost-input" placeholder="Location of Incident">
+
+                <div class="relative">
+                    <textarea id="crime-description" rows="6" class="ghost-input w-full resize-none" placeholder="Describe exactly what happened... e.g., 'Someone broke the lock of my shop last night and took goods worth ₹50,000.'"></textarea>
                 </div>
 
-                <div id="results-content" class="prose max-w-none">
-                    <!-- Results from the API will be injected here -->
+                <div id="smart-prefill-form" class="hidden flex flex-col gap-4 border border-white/10 rounded-xl p-4 bg-slate-900/40">
+                    <h4 class="text-sm font-semibold text-emerald-300 uppercase tracking-wider">FIR Preparation Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input id="complainant-address" type="text" class="ghost-input" placeholder="Complainant Address">
+                        <input id="police-station" type="text" class="ghost-input" placeholder="Police Station (for filing)">
+                    </div>
+                    <textarea id="witness-details" rows="3" class="ghost-input w-full resize-none" placeholder="Witness details (if any)"></textarea>
+                    <textarea id="additional-facts" rows="3" class="ghost-input w-full resize-none" placeholder="Additional useful facts for pre-fill (optional)"></textarea>
                 </div>
+
+                <button type="button" id="analyze-btn" class="primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(52,211,153,0.2)]">
+                    <i class="fas fa-gavel mr-2"></i> Generate Legal Toolkit
+                </button>
+
+                <button type="button" id="generate-prefill-btn" class="hidden primary-btn w-full py-3.5 mt-2 font-semibold text-slate-900 bg-sky-400 hover:bg-sky-300 rounded-xl transition-colors shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                    <i class="fas fa-file-lines mr-2"></i> Generate FIR Preparation Summary
+                </button>
+                <p class="text-xs text-center text-slate-500 mt-2">Outputs are for reference only and do not constitute legal counsel.</p>
             </div>
-        </main>
+        </section>
 
-        <!-- Footer -->
-        <footer class="mt-8 text-center text-xs text-gray-400">
-            <p>Nyay Sahayak Prototype. For informational purposes only. Not legal advice.</p>
-        </footer>
-    </div>
+        <section class="lg:col-span-7 flex flex-col h-full bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-sm">
+            <div class="bg-slate-900/80 border-b border-slate-800 px-6 py-4 shrink-0">
+                <h3 class="font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fas fa-bolt"></i> Output Panel
+                </h3>
+            </div>
+            
+            <div id="output-scroll-area" class="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
+                    <i class="fas fa-file-shield text-4xl mb-4"></i>
+                    <p>Enter incident details and generate the toolkit.</p>
+                </div>
 
-    <script>
-        // --- DOM Elements ---
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const backBtn = document.getElementById('back-btn');
-        const crimeDescription = document.getElementById('crime-description');
-        const screenAnalyze = document.getElementById('screen-analyze');
-        const screenResults = document.getElementById('screen-results');
-        const userQueryDisplay = document.getElementById('user-query-display');
-        const resultsContent = document.getElementById('results-content');
-        const loadingSpinner = document.getElementById('loading-spinner');
+                <div id="loading-spinner" class="hidden h-full flex flex-col items-center justify-center text-emerald-400">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+                    <p class="text-sm font-medium tracking-widest uppercase">Processing BNS Sections...</p>
+                </div>
 
-        // --- API Configuration ---
-        const API_URL = 'https://nyayagpt.onrender.com';
+                <div id="results-content" class="hidden flex flex-col gap-6">
+                    </div>
+            </div>
+        </section>
+    </main>
 
-        // --- Event Listeners ---
-        analyzeBtn.addEventListener('click', async () => {
-            const incidentDescription = crimeDescription.value;
-            if (incidentDescription.trim() === '') {
-                alert('Please describe the incident first.');
-                return;
-            }
-
-            // Show results screen and loading spinner
-            screenAnalyze.classList.add('hidden');
-            screenResults.classList.remove('hidden');
-            userQueryDisplay.textContent = `"${incidentDescription}"`;
-            loadingSpinner.classList.remove('hidden');
-            resultsContent.innerHTML = '';
-
-            try {
-                // --- Call the Backend API ---
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: incidentDescription }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const apiResponse = await response.json();
-
-                loadingSpinner.classList.add('hidden');
-
-                if (apiResponse.error) {
-                    renderError(apiResponse.error);
-                } else {
-                    // Simple formatter for the AI's markdown-like response
-                    renderResults(apiResponse.analysis.replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>').replace(/\*/g, '<br>'));
-                }
-
-            } catch (error) {
-                console.error("Error calling the API:", error);
-                loadingSpinner.classList.add('hidden');
-                renderError("Could not connect to the analysis server. Please ensure the backend is running.");
-            }
-        });
-
-        backBtn.addEventListener('click', () => {
-            screenResults.classList.add('hidden');
-            screenAnalyze.classList.remove('hidden');
-            crimeDescription.value = '';
-        });
-
-        function renderResults(formattedAnalysisHtml) {
-            resultsContent.innerHTML = formattedAnalysisHtml;
-        }
-
-        function renderError(errorMessage) {
-            resultsContent.innerHTML = `<div class="text-center p-4 bg-red-100 border border-red-300 rounded-lg">
-                <h3 class="font-semibold text-red-800">An Error Occurred</h3>
-                <p class="text-red-700">${errorMessage}</p>
-            </div>`;
-        }
-    </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="assets/js/main.js"></script>
 </body>
-
 </html>

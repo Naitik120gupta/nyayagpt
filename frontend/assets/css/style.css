@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: #020617; /* Deep slate */
+}
+
+/* Background Glow Effects */
+.glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: 0;
+    pointer-events: none;
+}
+.glow-one {
+    top: -200px;
+    left: -200px;
+    background: radial-gradient(circle, rgba(52, 211, 153, 0.1), transparent 70%);
+}
+.glow-two {
+    bottom: -200px;
+    right: -200px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.05), transparent 70%);
+}
+
+/* Card & Inputs */
+.main-card {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    backdrop-filter: blur(12px);
+}
+
+.ghost-input {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #f8fafc;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+.ghost-input:focus {
+    outline: none;
+    border-color: #34d399; /* Emerald 400 */
+    background: rgba(15, 23, 42, 0.9);
+}
+
+input[type="date"],
+input[type="time"] {
+    color-scheme: lights;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0.9);
+    opacity: 0.9;
+    cursor: pointer;
+}
+
+/* Custom Scrollbar for Dashboard feel */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Toolkit Cards */
+.toolkit-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.25rem;
+}
+
+.toolkit-legal { border-left: 3px solid #38bdf8; }
+.toolkit-route { border-left: 3px solid #34d399; }
+.toolkit-summary { border-left: 3px solid #fb923c; }
+.toolkit-rights { border-left: 3px solid #f87171; background: rgba(127, 29, 29, 0.1); }
+
+/* Utilities */
+.draft-box {
+    background: rgba(0,0,0,0.2);
+    border: 1px dashed rgba(251, 146, 60, 0.4);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+}
