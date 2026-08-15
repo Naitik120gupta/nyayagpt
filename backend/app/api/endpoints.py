@@ -83,6 +83,7 @@ class QueryRequest(BaseModel):
 class FirDataRequest(BaseModel):
     firData: Dict[str, Any]
 
+@router.post("/analyse")
 @router.post("/analyze")
 async def analyze_crime(
     request: QueryRequest,

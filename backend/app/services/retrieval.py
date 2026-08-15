@@ -1,5 +1,7 @@
 import json
 import logging
+import math
+from collections import Counter, defaultdict
 import re
 from typing import Any, Dict, List
 
@@ -26,6 +28,97 @@ def _normalize_query(query: str) -> str:
     return text
 
 
+def _tokenize_text(text: str) -> List[str]:
+    return re.findall(r"[A-Za-z0-9]+", (text or "").lower())
+
+
+def _normalize_scores(scores: List[float]) -> List[float]:
+    if not scores:
+        return []
+
+    maximum = max(scores)
+    minimum = min(scores)
+    if math.isclose(maximum, minimum):
+        return [1.0 if score > 0 else 0.0 for score in scores]
+
+    denominator = maximum - minimum
+    return [(score - minimum) / denominator for score in scores]
+
+
+def _combine_modalities(vector_score: float, bm25_score: float) -> float:
+    vector_component = max(0.0, min(1.0, vector_score))
+    bm25_component = max(0.0, min(1.0, bm25_score))
+    return 1.0 - ((1.0 - vector_component) * (1.0 - bm25_component))
+
+
+class _BM25Index:
+    def __init__(self, records: List[Dict[str, Any]], k1: float = 1.5, b: float = 0.75):
+        self.records = records
+        self.k1 = k1
+        self.b = b
+        self.document_count = len(records)
+        self.document_lengths: List[int] = []
+        self.average_document_length = 0.0
+        self.document_frequencies: Counter[str] = Counter()
+        self.postings = defaultdict(list)
+
+        if not records:
+            return
+
+        total_length = 0
+        for index, record in enumerate(records):
+            tokens = _tokenize_text(str(record.get("document", "")))
+            term_frequencies = Counter(tokens)
+            document_length = len(tokens)
+            self.document_lengths.append(document_length)
+            total_length += document_length
+
+            for term in term_frequencies:
+                self.document_frequencies[term] += 1
+            for term, frequency in term_frequencies.items():
+                self.postings[term].append((index, frequency))
+
+        self.average_document_length = total_length / self.document_count if self.document_count else 0.0
+
+    def score(self, query: str) -> List[float]:
+        if not self.records or not query:
+            return []
+
+        query_terms = Counter(_tokenize_text(query))
+        if not query_terms:
+            return [0.0 for _ in self.records]
+
+        scores = [0.0 for _ in self.records]
+        average_length = self.average_document_length or 1.0
+
+        for term, query_frequency in query_terms.items():
+            postings = self.postings.get(term)
+            if not postings:
+                continue
+
+            document_frequency = self.document_frequencies.get(term, 0)
+            if document_frequency <= 0:
+                continue
+
+            inverse_document_frequency = math.log(
+                1.0 + ((self.document_count - document_frequency + 0.5) / (document_frequency + 0.5))
+            )
+            query_weight = ((query_frequency * 2.0) / (query_frequency + 1.0)) if query_frequency > 0 else 1.0
+
+            for document_index, term_frequency in postings:
+                document_length = self.document_lengths[document_index] or 1
+                denominator = term_frequency + self.k1 * (1.0 - self.b + self.b * (document_length / average_length))
+                if denominator <= 0:
+                    continue
+                scores[document_index] += (
+                    inverse_document_frequency
+                    * ((term_frequency * (self.k1 + 1.0)) / denominator)
+                    * query_weight
+                )
+
+        return scores
+
+
 def is_english(query: str) -> bool:
     text = _normalize_query(query)
     if not text:
@@ -40,24 +133,42 @@ class MultilingualLegalRetriever:
         self.embedding_service = InLegalBERTEmbeddingService()
         self.client = chromadb.PersistentClient(path=settings.VECTOR_STORE_DIR)
         self.collection = self.client.get_or_create_collection(name=settings.COLLECTION_NAME)
+        self._search_records = self._load_search_records()
+        self._bm25_index = _BM25Index(self._search_records)
 
-    def retrieve(self, query: str, k: int = 5) -> Dict[str, Any]:
-        if not is_english(query):
-            raise ValueError("Only English queries are supported")
+    def _load_search_records(self) -> List[Dict[str, Any]]:
+        try:
+            raw_records = self.collection.get(include=["documents", "metadatas"])
+        except Exception as error:
+            logger.warning("Unable to load BM25 corpus from vector store: %s", error)
+            return []
 
-        normalized_query = _normalize_query(query)
-        query_embedding = self.embedding_service.embed_query(normalized_query)
+        if not isinstance(raw_records, dict):
+            return []
 
-        if not query_embedding:
-            return {
-                "query": query,
-                "normalized_query": normalized_query,
-                "results": [],
-            }
+        documents = raw_records.get("documents", []) or []
+        metadatas = raw_records.get("metadatas", []) or []
+        ids = raw_records.get("ids", []) or []
 
+        records: List[Dict[str, Any]] = []
+        for index, document in enumerate(documents):
+            if not document:
+                continue
+            records.append(
+                {
+                    "id": ids[index] if index < len(ids) else None,
+                    "document": document,
+                    "metadata": metadatas[index] if index < len(metadatas) else {},
+                }
+            )
+
+        return records
+
+    def _collect_vector_candidates(self, query_embedding: List[float], k: int) -> List[Dict[str, Any]]:
+        candidate_pool_size = max(k * 4, 20)
         raw_results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=k,
+            n_results=candidate_pool_size,
             include=["documents", "metadatas", "distances"],
         )
 
@@ -71,23 +182,119 @@ class MultilingualLegalRetriever:
             metadata = metadatas[index] if index < len(metadatas) else {}
             distance = distances[index] if index < len(distances) else None
             item_id = ids[index] if index < len(ids) else None
-            # Convert distance to similarity score (score = 1 − distance).
-            # ChromaDB cosine distance is in [0, 2]; L2 distances for
-            # unit-normalised embeddings behave similarly near the origin.
-            score = (1.0 - distance) if distance is not None else 1.0
+            similarity = (1.0 - distance) if distance is not None else 1.0
             results.append(
                 {
                     "id": item_id,
                     "document": document,
                     "metadata": metadata or {},
                     "distance": distance,
-                    "score": score,
+                    "vector_score": similarity,
+                    "bm25_score": 0.0,
                 }
             )
 
+        return results
+
+    def _collect_bm25_candidates(self, normalized_query: str) -> List[Dict[str, Any]]:
+        bm25_scores = self._bm25_index.score(normalized_query)
+        if not bm25_scores:
+            return []
+
+        normalized_bm25_scores = _normalize_scores(bm25_scores)
+        results = []
+        for index, normalized_bm25_score in enumerate(normalized_bm25_scores):
+            if normalized_bm25_score <= 0:
+                continue
+
+            record = self._search_records[index]
+            results.append(
+                {
+                    "id": record.get("id"),
+                    "document": record.get("document", ""),
+                    "metadata": record.get("metadata", {}) or {},
+                    "distance": None,
+                    "vector_score": 0.0,
+                    "bm25_score": normalized_bm25_score,
+                }
+            )
+
+        return results
+
+    def _merge_candidates(self, vector_candidates: List[Dict[str, Any]], bm25_candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        candidates_by_key: Dict[str, Dict[str, Any]] = {}
+
+        def _candidate_key(candidate: Dict[str, Any]) -> str:
+            item_id = candidate.get("id")
+            if item_id:
+                return str(item_id)
+            document = str(candidate.get("document", ""))
+            return f"doc::{document}"
+
+        for candidate in vector_candidates:
+            candidates_by_key[_candidate_key(candidate)] = dict(candidate)
+
+        for candidate in bm25_candidates:
+            key = _candidate_key(candidate)
+            existing = candidates_by_key.get(key)
+            if existing is None:
+                candidates_by_key[key] = dict(candidate)
+                continue
+
+            existing["bm25_score"] = max(float(existing.get("bm25_score", 0.0)), float(candidate.get("bm25_score", 0.0)))
+            if not existing.get("metadata") and candidate.get("metadata"):
+                existing["metadata"] = candidate.get("metadata")
+            if not existing.get("document") and candidate.get("document"):
+                existing["document"] = candidate.get("document")
+
+        merged_candidates = list(candidates_by_key.values())
+        for candidate in merged_candidates:
+            candidate["score"] = _combine_modalities(
+                float(candidate.get("vector_score", 0.0)),
+                float(candidate.get("bm25_score", 0.0)),
+            )
+
+        merged_candidates.sort(
+            key=lambda item: (
+                float(item.get("score", 0.0)),
+                float(item.get("vector_score", 0.0)),
+                float(item.get("bm25_score", 0.0)),
+            ),
+            reverse=True,
+        )
+        return merged_candidates
+
+    def retrieve(self, query: str, k: int = 5) -> Dict[str, Any]:
+        if not is_english(query):
+            raise ValueError("Only English queries are supported")
+
+        normalized_query = _normalize_query(query)
+        if not normalized_query:
+            return {
+                "query": query,
+                "normalized_query": normalized_query,
+                "results": [],
+            }
+
+        query_embedding = self.embedding_service.embed_query(normalized_query)
+        vector_candidates: List[Dict[str, Any]] = []
+        if query_embedding:
+            vector_candidates = self._collect_vector_candidates(query_embedding, k)
+
+        bm25_candidates = self._collect_bm25_candidates(normalized_query)
+
+        if not vector_candidates and not bm25_candidates:
+            return {
+                "query": query,
+                "normalized_query": normalized_query,
+                "results": [],
+            }
+
+        results = self._merge_candidates(vector_candidates, bm25_candidates)
+
         if not results:
             raise ValueError(
-                "No relevant BNS sections were found in the vector index for this query. "
+                "No relevant BNS sections were found in the hybrid search index for this query. "
                 "Please re-ingest the legal dataset and try again."
             )
 
@@ -96,12 +303,12 @@ class MultilingualLegalRetriever:
         ]
 
         if thresholded_results:
-            selected_results = thresholded_results
+            selected_results = thresholded_results[:k]
         else:
             fallback_size = min(3, len(results))
             selected_results = results[:fallback_size]
             logger.warning(
-                "Retrieval threshold %.2f filtered all candidates for query '%s'. "
+                "Retrieval threshold %.2f filtered all hybrid candidates for query '%s'. "
                 "Falling back to top %s raw matches.",
                 settings.MIN_RELEVANCE_SCORE,
                 normalized_query,
