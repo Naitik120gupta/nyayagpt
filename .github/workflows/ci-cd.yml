@@ -1,0 +1,66 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run backend test suite
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      # test_output_correctness.py runs live retrieval against the checked-in
+      # vector_store/chroma.sqlite3 using InLegalBERT. Caching HF weights keeps
+      # repeat CI runs fast (first run downloads ~450MB, later runs use cache).
+      - name: Cache HuggingFace model weights
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-inlegalbert-${{ runner.os }}-v1
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run test suite
+        run: pytest
+
+  deploy:
+    name: Deploy backend to server
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            git fetch origin main
+            git reset --hard origin/main
+            source venv/bin/activate
+            pip install -r backend/requirements.txt
+            sudo systemctl restart nyayagpt-backend
+            sleep 4
+            # simple liveness check — FastAPI serves /docs automatically
+            curl -sf http://127.0.0.1:8000/docs > /dev/null && echo "Health check passed"
