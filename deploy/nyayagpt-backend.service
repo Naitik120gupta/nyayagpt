@@ -1,0 +1,27 @@
+# Install with:
+#   sudo cp deploy/nyayagpt-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now nyayagpt-backend
+#
+# Adjust the paths below if your repo lives somewhere other than
+# /home/ubuntu/nyayagpt, and the User= if you're not using the "ubuntu" user.
+
+[Unit]
+Description=NyayaGPT FastAPI backend
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/nyayagpt
+EnvironmentFile=/home/ubuntu/nyayagpt/backend/.env
+ExecStart=/home/ubuntu/nyayagpt/venv/bin/uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+
+# One worker on purpose: InLegalBERT + torch load into RAM per worker.
+# On a 12GB box, 1 worker is safe. Only raise --workers if you've confirmed
+# headroom (check with `free -h` while the service is running).
+
+[Install]
+WantedBy=multi-user.target
