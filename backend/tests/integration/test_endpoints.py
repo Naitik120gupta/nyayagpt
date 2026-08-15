@@ -73,6 +73,10 @@ class TestAnalyzeEndpoint:
         resp = client.post("/analyze", json={"query": "Someone stole my phone"})
         assert resp.status_code == 200
 
+    def test_returns_200_from_analyse_alias(self, client, mock_services):
+        resp = client.post("/analyse", json={"query": "Someone stole my phone"})
+        assert resp.status_code == 200
+
     def test_response_contains_analysis_key(self, client, mock_services):
         resp = client.post("/analyze", json={"query": "Someone stole my phone"})
         data = resp.json()
