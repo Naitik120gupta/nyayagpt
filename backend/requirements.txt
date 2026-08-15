@@ -8,3 +8,4 @@ numpy
 onnxruntime
 sentence-transformers
 torch
+pytest
