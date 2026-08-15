@@ -158,10 +158,6 @@ python -m http.server 5500
 
 ### Quick Deploy
 
-```bash
-# SSH into EC2
-ssh -i nyayagpt-key.pem ubuntu@<EC2_ELASTIC_IP>
-
 # Clone and install
 git clone https://github.com/Naitik120gupta/nyayagpt.git
 cd nyayagpt
@@ -175,6 +171,7 @@ echo 'GEMINI_API_KEY=your_key_here' > backend/.env
 # Run ingest (use tmux for long-running jobs)
 tmux new -s ingest
 python backend/scripts/ingest.py
+
 # Ctrl+B then D to detach
 
 # Start as systemd service

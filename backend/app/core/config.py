@@ -25,8 +25,9 @@ class Settings:
     # 0 = never expire
     GEMINI_CACHE_TTL_SECONDS = int(os.getenv("GEMINI_CACHE_TTL_SECONDS", "86400"))
 
-    # Local Embeddings (InLegalBERT) #Now sentence-transformers/all-MiniLM-L6-v2 is used for embeddings
-    LOCAL_EMBEDDING_MODEL = os.getenv("LOCAL_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    # Local embeddings must match the persisted Chroma index.
+    # The checked-in vector store was built with InLegalBERT (768-dim vectors).
+    LOCAL_EMBEDDING_MODEL = os.getenv("LOCAL_EMBEDDING_MODEL", "law-ai/InLegalBERT")
     EMBEDDING_DEVICE = os.getenv("EMBEDDING_DEVICE", "")
     EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "64"))
     QUERY_EMBEDDING_PREFIX = os.getenv("QUERY_EMBEDDING_PREFIX", "")
@@ -51,7 +52,7 @@ class Settings:
 
     # Retrieval
     RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", "5"))
-    # Minimum cosine-similarity score to keep a result (score = 1 − distance).
+    # Minimum hybrid relevance score to keep a result.
     # Set to 0.0 to disable the threshold.
     MIN_RELEVANCE_SCORE = float(os.getenv("MIN_RELEVANCE_SCORE", "0.72"))
 

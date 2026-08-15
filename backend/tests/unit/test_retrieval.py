@@ -3,7 +3,7 @@ Unit tests for backend.app.services.retrieval
 """
 import pytest
 
-from app.services.retrieval import _normalize_query, is_english
+from app.services.retrieval import _BM25Index, MultilingualLegalRetriever, _normalize_query, is_english
 
 
 # ─── _normalize_query ────────────────────────────────────────────────────────
@@ -105,3 +105,60 @@ class TestScoreThreshold:
         results = [self._make_result(0.99), self._make_result(0.80)]
         out = self._filter(results, 0.0)
         assert len(out) == 2
+
+
+# ─── hybrid retrieval ────────────────────────────────────────────────────────
+
+
+class TestHybridRetrieval:
+    class _FakeEmbeddingService:
+        def embed_query(self, query):
+            return [0.1, 0.2, 0.3]
+
+    class _FakeCollection:
+        def __init__(self, records):
+            self.records = records
+
+        def query(self, query_embeddings, n_results, include):
+            return {
+                "ids": [["BNS_74_0", "BNS_308_0"]],
+                "documents": [[
+                    "BNS Section 74: assault modesty and harassment",
+                    "BNS Section 308: extortion and intimidation",
+                ]],
+                "metadatas": [[
+                    {"section_number": "74", "section_title": "Assault modesty"},
+                    {"section_number": "308", "section_title": "Extortion"},
+                ]],
+                "distances": [[0.20, 0.90]],
+            }
+
+    def test_bm25_can_surface_top_hit_ahead_of_weak_vector_match(self):
+        retriever = MultilingualLegalRetriever.__new__(MultilingualLegalRetriever)
+        retriever.embedding_service = self._FakeEmbeddingService()
+        retriever.collection = self._FakeCollection([])
+        retriever._search_records = [
+            {
+                "id": "BNS_74_0",
+                "document": "BNS Section 74: assault modesty and harassment",
+                "metadata": {"section_number": "74", "section_title": "Assault modesty"},
+            },
+            {
+                "id": "BNS_303_0",
+                "document": "BNS Section 303: theft of movable property",
+                "metadata": {"section_number": "303", "section_title": "Theft"},
+            },
+            {
+                "id": "BNS_308_0",
+                "document": "BNS Section 308: extortion and intimidation",
+                "metadata": {"section_number": "308", "section_title": "Extortion"},
+            },
+        ]
+        retriever._bm25_index = _BM25Index(retriever._search_records)
+
+        payload = retriever.retrieve("theft of phone", k=2)
+        results = payload["results"]
+
+        assert len(results) == 2
+        assert results[0]["metadata"]["section_number"] == "303"
+        assert results[1]["metadata"]["section_number"] == "74"
