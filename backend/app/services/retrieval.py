@@ -26,10 +26,24 @@ def _normalize_query(query: str) -> str:
     text = (query or "").strip()
     text = re.sub(r"\s+", " ", text)
     return text
-
+_STOPWORDS = frozenset({
+    "a", "an", "the", "and", "or", "but", "if", "then", "of", "for", "to",
+    "in", "on", "at", "by", "with", "from", "into", "onto", "as", "is",
+    "was", "were", "be", "been", "being", "am", "are", "do", "does", "did",
+    "has", "have", "had", "having", "will", "would", "shall", "should",
+    "can", "could", "may", "might", "must", "i", "me", "my", "mine",
+    "you", "your", "yours", "he", "him", "his", "she", "her", "hers",
+    "it", "its", "we", "us", "our", "ours", "they", "them", "their",
+    "theirs", "this", "that", "these", "those", "who", "whom", "whose",
+    "which", "what", "when", "where", "why", "how", "there", "here",
+    "someone", "somebody", "anyone", "anybody", "no", "not", "than", "so",
+    "very", "just", "also", "such", "any", "some", "all", "each", "every",
+    "other", "another", "same", "own", "about", "against",
+})
 
 def _tokenize_text(text: str) -> List[str]:
-    return re.findall(r"[A-Za-z0-9]+", (text or "").lower())
+    tokens = re.findall(r"[A-Za-z0-9]+", (text or "").lower())
+    return [t for t in tokens if t not in _STOPWORDS]
 
 
 def _normalize_scores(scores: List[float]) -> List[float]:
@@ -165,7 +179,7 @@ class MultilingualLegalRetriever:
         return records
 
     def _collect_vector_candidates(self, query_embedding: List[float], k: int) -> List[Dict[str, Any]]:
-        candidate_pool_size = max(k * 4, 20)
+        candidate_pool_size = max(k * 10, 100)
         raw_results = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=candidate_pool_size,
