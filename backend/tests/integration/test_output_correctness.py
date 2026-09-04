@@ -179,11 +179,30 @@ class TestLiveRetrievalCorrectness:
 
     @pytest.fixture(scope="class", autouse=True)
     def retriever(self):
-        import sys, types
-        # Remove stubs that conftest may have set for chromadb/sentence_transformers
-        for mod in list(sys.modules.keys()):
-            if mod in ("chromadb", "sentence_transformers", "sentence_transformers.models"):
-                del sys.modules[mod]
+        import sys
+        # conftest.py stubs several third-party packages (chromadb,
+        # sentence_transformers, dotenv, google.genai, ...) so unit tests can
+        # import the app without network/GPU access. Unit tests run before
+        # this class, so every app module that touches those packages is
+        # already in sys.modules with the STUB bound into its namespace at
+        # import time. Deleting only the stub packages does nothing for code
+        # that already imported them — Python reuses the cached module and
+        # never re-executes its `import chromadb` line. The only reliable
+        # fix is to drop every already-imported app module too, so all of
+        # them get fresh, real bindings when re-imported below.
+        stub_packages = (
+            "chromadb", "sentence_transformers", "sentence_transformers.models",
+            "dotenv", "google", "google.genai",
+        )
+        stale = [
+            mod for mod in list(sys.modules.keys())
+            if mod in stub_packages
+            or mod.startswith("google.")
+            or mod == "app" or mod.startswith("app.")
+            or mod == "backend.app" or mod.startswith("backend.app.")
+        ]
+        for mod in stale:
+            del sys.modules[mod]
         try:
             from app.services.retrieval import MultilingualLegalRetriever
             return MultilingualLegalRetriever()
