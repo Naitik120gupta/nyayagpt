@@ -3,7 +3,17 @@ Unit tests for backend.app.services.retrieval
 """
 import pytest
 
-from app.services.retrieval import _BM25Index, MultilingualLegalRetriever, _normalize_query, is_english
+import app.services.retrieval as retrieval_module
+from app.services.retrieval import (
+    _BM25Index,
+    MultilingualLegalRetriever,
+    _combine_modalities,
+    _expand_query_terms,
+    _normalize_query,
+    _stem,
+    _tokenize_text,
+    is_english,
+)
 
 
 # ─── _normalize_query ────────────────────────────────────────────────────────
@@ -162,3 +172,112 @@ class TestHybridRetrieval:
         assert len(results) == 2
         assert results[0]["metadata"]["section_number"] == "303"
         assert results[1]["metadata"]["section_number"] == "74"
+
+
+# ─── stemming & query expansion ──────────────────────────────────────────────
+
+
+class TestStemming:
+    @pytest.mark.parametrize(
+        "variants",
+        [
+            ("molest", "molested", "molestation"),
+            ("threaten", "threatened", "threatens"),
+            ("house", "houses"),
+            ("kidnap", "kidnapped"),
+            ("murder", "murdered"),
+            ("punish", "punished", "punishment"),
+        ],
+    )
+    def test_word_forms_share_a_stem(self, variants):
+        assert len({_stem(word) for word in variants}) == 1
+
+    def test_short_words_and_numbers_untouched(self):
+        assert _stem("hit") == "hit"
+        assert _stem("2023") == "2023"
+
+    def test_trespass_not_mangled(self):
+        assert _stem("trespass") == "trespass"
+
+    def test_tokenize_applies_stemming(self):
+        assert _tokenize_text("He molested her") == ["molest"]
+
+
+class TestQueryExpansion:
+    def test_colloquial_word_adds_legal_term(self):
+        terms = _expand_query_terms("my phone was stolen")
+        assert terms[_stem("theft")] > 0
+
+    def test_typed_terms_outweigh_synonyms(self):
+        terms = _expand_query_terms("he robbed me")
+        assert terms[_stem("robbed")] == 1.0
+        assert 0 < terms["robbery"] < 1.0
+
+    def test_unknown_words_pass_through(self):
+        terms = _expand_query_terms("xyzzy")
+        assert dict(terms) == {"xyzzy": 1.0}
+
+    def test_bm25_matches_statute_vocabulary_via_synonym(self):
+        records = [
+            {"id": "a", "document": "BNS Section 303: Theft. dishonestly taking movable property", "metadata": {}},
+            {"id": "b", "document": "BNS Section 356: Defamation. imputation harming reputation", "metadata": {}},
+        ]
+        scores = _BM25Index(records).score("someone stole my wallet")
+        assert scores[0] > scores[1]
+
+
+# ─── fusion & section dedup ──────────────────────────────────────────────────
+
+
+class TestFusion:
+    def test_weighted_sum_uses_configured_vector_weight(self, monkeypatch):
+        monkeypatch.setattr(retrieval_module.settings, "HYBRID_VECTOR_WEIGHT", 0.25)
+        assert _combine_modalities(1.0, 0.0) == pytest.approx(0.25)
+        assert _combine_modalities(0.0, 1.0) == pytest.approx(0.75)
+
+    def test_scores_are_clamped(self):
+        assert 0.0 <= _combine_modalities(5.0, -2.0) <= 1.0
+
+
+class TestSectionDedup:
+    class _FakeEmbeddingService:
+        def embed_query(self, query):
+            return [0.1, 0.2, 0.3]
+
+    class _FakeCollection:
+        def query(self, query_embeddings, n_results, include):
+            return {
+                "ids": [["BNS_303_0", "BNS_303_1", "BNS_303_2", "BNS_318_0"]],
+                "documents": [["theft part one", "theft part two", "theft part three", "cheating"]],
+                "metadatas": [[
+                    {"act_name": "BNS", "section_number": "303", "chunk_index": 0},
+                    {"act_name": "BNS", "section_number": "303", "chunk_index": 1},
+                    {"act_name": "BNS", "section_number": "303", "chunk_index": 2},
+                    {"act_name": "BNS", "section_number": "318", "chunk_index": 0},
+                ]],
+                "distances": [[0.10, 0.12, 0.14, 0.30]],
+            }
+
+    def test_top_k_contains_distinct_sections(self, monkeypatch):
+        monkeypatch.setattr(retrieval_module.settings, "MIN_RELEVANCE_SCORE", 0.0)
+        retriever = MultilingualLegalRetriever.__new__(MultilingualLegalRetriever)
+        retriever.embedding_service = self._FakeEmbeddingService()
+        retriever.collection = self._FakeCollection()
+        retriever._search_records = []
+        retriever._bm25_index = _BM25Index([])
+
+        results = retriever.retrieve("phone taken", k=5)["results"]
+
+        sections = [item["metadata"]["section_number"] for item in results]
+        assert sections == ["303", "318"]
+        assert results[0]["id"] == "BNS_303_0"
+
+    def test_vector_scores_rescaled_within_pool(self):
+        retriever = MultilingualLegalRetriever.__new__(MultilingualLegalRetriever)
+        retriever.collection = self._FakeCollection()
+
+        candidates = retriever._collect_vector_candidates([0.1], k=5)
+
+        assert candidates[0]["vector_score"] == pytest.approx(1.0)
+        assert candidates[-1]["vector_score"] == pytest.approx(0.0)
+        assert candidates[0]["vector_similarity"] == pytest.approx(0.90)

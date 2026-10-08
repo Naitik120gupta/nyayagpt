@@ -19,6 +19,11 @@ except ModuleNotFoundError as error:
 
 logger = logging.getLogger(__name__)
 
+# Weight of an injected legal synonym relative to a term the user typed.
+_SYNONYM_WEIGHT = 0.6
+# Section titles are short and highly informative, so they count extra in BM25.
+_TITLE_BOOST = 2
+
 ENGLISH_QUERY_PATTERN = re.compile(r"^[A-Za-z0-9\s.,!?;:'\"()\[\]{}\-_/&%+*=<>@#$`~|\\]+$")
 
 
@@ -41,9 +46,108 @@ _STOPWORDS = frozenset({
     "other", "another", "same", "own", "about", "against",
 })
 
+_STEM_SUFFIXES = (
+    "ations", "ation", "ments", "ment", "ingly", "ings", "ing", "edly", "ed", "ies", "s",
+)
+
+
+def _stem(token: str) -> str:
+    """Light suffix-stripping stemmer so that e.g. "molested", "molestation" and
+    "molest", or "threatened" and "threatens", match the same BM25 term."""
+    if token.isdigit() or len(token) <= 3:
+        return token
+    for suffix in _STEM_SUFFIXES:
+        if token.endswith(suffix) and len(token) - len(suffix) >= 3:
+            if suffix == "s" and token.endswith(("ss", "us", "is")):
+                break
+            token = token[: -len(suffix)] + ("y" if suffix == "ies" else "")
+            break
+    if len(token) >= 4 and token[-1] == token[-2] and token[-1] not in "lsz":
+        token = token[:-1]  # robbed -> robb -> rob, kidnapped -> kidnapp -> kidnap
+    if len(token) > 4 and token.endswith("e"):
+        token = token[:-1]  # house/houses -> hous
+    return token
+
+
 def _tokenize_text(text: str) -> List[str]:
     tokens = re.findall(r"[A-Za-z0-9]+", (text or "").lower())
-    return [t for t in tokens if t not in _STOPWORDS]
+    return [_stem(t) for t in tokens if t not in _STOPWORDS]
+
+
+# Everyday words people use to describe an incident, mapped to the vocabulary
+# the BNS text actually uses. Applied to the BM25 query only, so a victim's
+# description ("my phone was stolen") can match the statute ("theft").
+_LEGAL_SYNONYMS: Dict[str, str] = {
+    "steal": "theft", "stole": "theft", "stolen": "theft stolen property", "thief": "theft",
+    "thieves": "theft", "pickpocket": "theft", "shoplift": "theft",
+    "snatch": "snatching theft", "grab": "snatching criminal force",
+    "rob": "robbery", "robbed": "robbery", "mug": "robbery", "loot": "robbery dacoity",
+    "gang": "dacoity robbers organised", "armed": "deadly weapon",
+    "knife": "deadly weapon", "knifepoint": "deadly weapon robbery", "gun": "deadly weapon firearm",
+    "gunpoint": "deadly weapon robbery", "shoot": "firearm murder", "shot": "firearm murder",
+    "burglary": "house-breaking house-trespass", "burgle": "house-breaking house-trespass",
+    "break": "house-breaking", "broke": "house-breaking", "enter": "trespass", "entered": "trespass",
+    "intrude": "trespass", "intruder": "trespass",
+    "cheat": "cheating", "cheated": "cheating", "fraud": "cheating dishonestly",
+    "scam": "cheating", "con": "cheating", "duped": "cheating", "fake": "false counterfeit",
+    "pretend": "personation", "pretended": "personation", "impersonate": "personation",
+    "misuse": "breach trust misappropriation", "misused": "breach trust misappropriation",
+    "embezzle": "breach trust misappropriation", "trusted": "entrusted",
+    "forge": "forgery", "forged": "forgery", "signature": "forgery document",
+    "threat": "criminal intimidation", "threaten": "criminal intimidation",
+    "threatening": "criminal intimidation", "threatened": "criminal intimidation",
+    "blackmail": "extortion", "demand": "extortion", "demanded": "extortion",
+    "ransom": "kidnapping abduction ransom",
+    "molest": "outrage modesty criminal force woman", "molested": "outrage modesty criminal force woman",
+    "grope": "outrage modesty criminal force woman", "groped": "outrage modesty criminal force woman",
+    "eve": "sexual harassment", "teasing": "sexual harassment",
+    "lewd": "sexual harassment obscene", "obscene": "obscene", "sexual": "sexual",
+    "stalk": "stalking", "stalking": "stalking", "follow": "stalking", "following": "stalking",
+    "record": "voyeurism capture image", "recorded": "voyeurism capture image",
+    "video": "voyeurism image", "photo": "voyeurism image", "spy": "voyeurism",
+    "disrobe": "disrobe naked", "strip": "disrobe naked", "clothes": "disrobe",
+    "rape": "rape", "raped": "rape",
+    "dowry": "dowry cruelty", "husband": "cruelty husband", "inlaws": "cruelty relative husband",
+    "beat": "hurt voluntarily causing hurt", "beaten": "hurt voluntarily causing hurt",
+    "hit": "hurt assault", "slap": "hurt assault criminal force", "slapped": "hurt assault criminal force",
+    "punch": "hurt assault", "punched": "hurt assault", "kick": "hurt assault",
+    "attack": "assault hurt", "attacked": "assault hurt", "injure": "hurt", "injured": "hurt",
+    "fracture": "grievous hurt", "broken": "grievous hurt", "rod": "dangerous weapon",
+    "acid": "acid grievous hurt",
+    "kill": "murder death", "killed": "murder death", "murdered": "murder",
+    "careless": "negligence rash", "negligent": "negligence", "accident": "negligence rash",
+    "rashly": "rash", "speeding": "rash driving",
+    "kidnap": "kidnapping abduction", "kidnapped": "kidnapping abduction", "abduct": "abduction",
+    "locked": "wrongful confinement", "confined": "wrongful confinement",
+    "blocked": "wrongful restraint", "stopped": "wrongful restraint",
+    "suicide": "abetment suicide",
+    "rumour": "defamation imputation reputation", "rumours": "defamation imputation reputation",
+    "reputation": "defamation", "slander": "defamation", "libel": "defamation",
+    "bribe": "bribery gratification",
+    "fire": "fire mischief", "burn": "fire mischief", "vandalise": "mischief", "damage": "mischief",
+    "mob": "rioting unlawful assembly", "riot": "rioting",
+    "currency": "counterfeit currency-notes", "notes": "currency-notes",
+    "lie": "false evidence", "lied": "false evidence", "perjury": "false evidence",
+    "traffic": "trafficking", "trafficked": "trafficking", "labour": "exploitation",
+    "dog": "animal", "cat": "animal", "cow": "animal", "pet": "animal",
+}
+_STEMMED_LEGAL_SYNONYMS: Dict[str, List[str]] = {}
+for _word, _expansion in _LEGAL_SYNONYMS.items():
+    _expansions = _STEMMED_LEGAL_SYNONYMS.setdefault(_stem(_word), [])
+    _expansions.extend(term for term in _tokenize_text(_expansion) if term not in _expansions)
+
+
+def _expand_query_terms(query: str) -> Counter:
+    """BM25 query terms: the query's own terms plus legal-vocabulary expansions.
+
+    Expansion terms get a lower weight than words the user actually typed."""
+    typed_tokens = _tokenize_text(query)
+    terms: Counter = Counter(typed_tokens)
+    for token in typed_tokens:
+        for expansion in _STEMMED_LEGAL_SYNONYMS.get(token, []):
+            if expansion not in typed_tokens:
+                terms[expansion] = max(terms[expansion], _SYNONYM_WEIGHT)
+    return terms
 
 
 def _normalize_scores(scores: List[float]) -> List[float]:
@@ -60,9 +164,23 @@ def _normalize_scores(scores: List[float]) -> List[float]:
 
 
 def _combine_modalities(vector_score: float, bm25_score: float) -> float:
+    """Weighted sum of the two normalized scores.
+
+    A probabilistic OR (1 - (1-v)(1-b)) let the vector side dominate: raw BERT
+    cosine similarities sit around 0.8-0.95 for almost every chunk, so every
+    candidate scored high and keyword evidence barely moved the ranking."""
     vector_component = max(0.0, min(1.0, vector_score))
     bm25_component = max(0.0, min(1.0, bm25_score))
-    return 1.0 - ((1.0 - vector_component) * (1.0 - bm25_component))
+    vector_weight = max(0.0, min(1.0, settings.HYBRID_VECTOR_WEIGHT))
+    return vector_weight * vector_component + (1.0 - vector_weight) * bm25_component
+
+
+def _section_key(candidate: Dict[str, Any]) -> str:
+    metadata = candidate.get("metadata") or {}
+    section_number = str(metadata.get("section_number", "")).strip()
+    if section_number:
+        return f"{metadata.get('act_name', '')}::{section_number}"
+    return str(candidate.get("id") or candidate.get("document", ""))
 
 
 class _BM25Index:
@@ -81,7 +199,8 @@ class _BM25Index:
 
         total_length = 0
         for index, record in enumerate(records):
-            tokens = _tokenize_text(str(record.get("document", "")))
+            title = str((record.get("metadata") or {}).get("section_title", ""))
+            tokens = _tokenize_text(str(record.get("document", ""))) + _tokenize_text(title) * _TITLE_BOOST
             term_frequencies = Counter(tokens)
             document_length = len(tokens)
             self.document_lengths.append(document_length)
@@ -98,7 +217,7 @@ class _BM25Index:
         if not self.records or not query:
             return []
 
-        query_terms = Counter(_tokenize_text(query))
+        query_terms = _expand_query_terms(query)
         if not query_terms:
             return [0.0 for _ in self.records]
 
@@ -191,19 +310,27 @@ class MultilingualLegalRetriever:
         distances = raw_results.get("distances", [[]])[0]
         ids = raw_results.get("ids", [[]])[0]
 
+        similarities = [
+            (1.0 - distances[index]) if index < len(distances) and distances[index] is not None else 1.0
+            for index in range(len(documents))
+        ]
+        # Rescale within the candidate pool so the best vector match gets 1.0 and
+        # the weakest 0.0; raw similarities are too compressed to compare with BM25.
+        normalized_similarities = _normalize_scores(similarities)
+
         results = []
         for index, document in enumerate(documents):
             metadata = metadatas[index] if index < len(metadatas) else {}
             distance = distances[index] if index < len(distances) else None
             item_id = ids[index] if index < len(ids) else None
-            similarity = (1.0 - distance) if distance is not None else 1.0
             results.append(
                 {
                     "id": item_id,
                     "document": document,
                     "metadata": metadata or {},
                     "distance": distance,
-                    "vector_score": similarity,
+                    "vector_similarity": similarities[index],
+                    "vector_score": normalized_similarities[index],
                     "bm25_score": 0.0,
                 }
             )
@@ -276,7 +403,13 @@ class MultilingualLegalRetriever:
             ),
             reverse=True,
         )
-        return merged_candidates
+
+        # Several chunks of one long section can all match; keep only the best
+        # one so the top-k holds k distinct sections instead of near-duplicates.
+        best_per_section: Dict[str, Dict[str, Any]] = {}
+        for candidate in merged_candidates:
+            best_per_section.setdefault(_section_key(candidate), candidate)
+        return list(best_per_section.values())
 
     def retrieve(self, query: str, k: int = 5) -> Dict[str, Any]:
         if not is_english(query):

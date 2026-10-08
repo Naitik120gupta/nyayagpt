@@ -52,9 +52,13 @@ class Settings:
 
     # Retrieval
     RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", "5"))
-    # Minimum hybrid relevance score to keep a result.
+    # Share of the hybrid score that comes from vector similarity; the rest is BM25.
+    # InLegalBERT is not trained for semantic search, so keyword evidence leads by default.
+    # Raise this after switching to a retrieval-tuned embedding model.
+    HYBRID_VECTOR_WEIGHT = float(os.getenv("HYBRID_VECTOR_WEIGHT", "0.4"))
+    # Minimum hybrid relevance score (0-1, weighted vector + BM25) to keep a result.
     # Set to 0.0 to disable the threshold.
-    MIN_RELEVANCE_SCORE = float(os.getenv("MIN_RELEVANCE_SCORE", "0.72"))
+    MIN_RELEVANCE_SCORE = float(os.getenv("MIN_RELEVANCE_SCORE", "0.3"))
 
     # ChromaDB
     COLLECTION_NAME = "bharatiya_nyaya_sanhita"
