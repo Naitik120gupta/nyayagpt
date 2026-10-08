@@ -20,7 +20,7 @@ Restart=always
 RestartSec=5
 
 # One worker on purpose: InLegalBERT + torch load into RAM per worker.
-# On a 12GB box, 1 worker is safe. Only raise --workers if you've confirmed
+# On a 4GB box, 1 worker is safe. Only raise --workers if you've confirmed
 # headroom (check with `free -h` while the service is running).
 
 [Install]
