@@ -145,44 +145,74 @@ python -m http.server 5500
 
 ## 🚀 Production Deployment (AWS EC2)
 
+The frontend is a static site on **Vercel**; the FastAPI backend runs on an **EC2** instance behind Nginx at `api.nyayagpt.in`.
+
 ### Infrastructure
 
 | Component | Details |
 |---|---|
 | Instance | AWS EC2 t3.medium (2 vCPU, 4GB RAM) |
-| OS | Ubuntu 22.04 LTS |
-| Web Server | Nginx (reverse proxy) |
-| SSL | Let's Encrypt (auto-renewing) |
-| Process Manager | systemd |
-| Frontend | Vercel (auto-deploy from `main` branch) |
+| OS | Ubuntu 22.04 LTS, Python 3.11 |
+| App server | Uvicorn (1 worker), managed by systemd as `nyayagpt-backend` |
+| Reverse proxy | Nginx → `127.0.0.1:8000` |
+| SSL | Let's Encrypt via certbot (auto-renewing) |
+| Frontend | Vercel (auto-deploys from `main`) |
+| CI/CD | GitHub Actions: tests on every push, auto-deploy to EC2 on merge to `main` |
 
-### Quick Deploy
+### First-time setup
 
-# Clone and install
+**1. Install system packages and the app**
+```bash
+sudo apt update && sudo apt install -y python3.11-venv nginx certbot python3-certbot-nginx
+
 git clone https://github.com/Naitik120gupta/nyayagpt.git
 cd nyayagpt
-python3 -m venv venv
+python3.11 -m venv venv
 source venv/bin/activate
 pip install -r backend/requirements.txt
 
-# Create .env
-echo 'GEMINI_API_KEY=your_key_here' > backend/.env
+cp backend/.env.example backend/.env   # then set GEMINI_API_KEY
+```
 
-# Run ingest (use tmux for long-running jobs)
-tmux new -s ingest
-python backend/scripts/ingest.py
+The vector store ships with the repo, so ingestion is only needed after you change the dataset or the embedding model:
+```bash
+tmux new -s ingest                     # survives SSH disconnects
+python backend/scripts/ingest.py       # Ctrl+B, then D to detach
+```
 
-# Ctrl+B then D to detach
+**2. Run the backend as a service**
+```bash
+sudo cp deploy/nyayagpt-backend.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now nyayagpt-backend
+```
 
-# Start as systemd service
-sudo systemctl start nyayagpt
-sudo systemctl enable nyayagpt
-
-# Set up Nginx + SSL
+**3. Put Nginx and HTTPS in front of it**
+```bash
+sudo cp deploy/nginx-nyayagpt.conf /etc/nginx/sites-available/nyayagpt
+sudo ln -s /etc/nginx/sites-available/nyayagpt /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
 sudo certbot --nginx -d api.nyayagpt.in
 ```
 
-Full deployment guide: see [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+**4. Point DNS at the server**: add an `A` record for `api` with the instance's public IP, then check:
+```bash
+curl -I https://api.nyayagpt.in/docs
+```
+
+> ⚠️ The first start downloads InLegalBERT (~450MB) and can take a few minutes. Keep one Uvicorn worker on a 4GB instance, because each worker loads its own copy of the model.
+
+### Continuous deployment
+
+After the one-time setup, every push to `main` that passes the test suite is deployed automatically by [`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml): it pulls `main` on the server, reinstalls requirements, restarts `nyayagpt-backend` and runs a health check. This needs the `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` and `DEPLOY_PATH` repository secrets.
+
+### Troubleshooting
+```bash
+sudo systemctl status nyayagpt-backend
+sudo journalctl -u nyayagpt-backend -n 100 --no-pager
+```
+
+Full runbook (deploy keys, secrets, sudoers rule): [`deploy/DEPLOY.md`](./deploy/DEPLOY.md)
 
 ---
 
